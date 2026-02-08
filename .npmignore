@@ -1,0 +1,9 @@
+src
+node_modules
+tsconfig.json
+tsconfig.test.json
+tsup.config.ts
+.oxlintrc.json
+.prettierrc.json
+.gitignore
+bun.lock
