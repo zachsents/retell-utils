@@ -25,6 +25,12 @@ export interface CallSchemaConfig {
   collectedDynamicVariables: z.ZodType
   /** Shape of `call_analysis.custom_analysis_data`. */
   analysisData: z.ZodType
+  /**
+   * When true, omits `.catch()` fallbacks so schemas fail fast on unexpected
+   * data. When false (default), required ended/analysis fields use `.catch()`
+   * for resilient webhook parsing.
+   */
+  strict?: boolean
 }
 
 /** Sensible defaults for all configurable fields (loose passthrough objects). */
@@ -33,6 +39,7 @@ export const callSchemaDefaults = {
   dynamicVariables: z.looseObject({}),
   collectedDynamicVariables: z.looseObject({}),
   analysisData: z.looseObject({}),
+  strict: false,
 } satisfies CallSchemaConfig
 
 // ---------------------------------------------------------------------------
@@ -68,6 +75,10 @@ const CallTypeSchema = z.discriminatedUnion("call_type", [
  * `metadata`, `retell_llm_dynamic_variables`, `collected_dynamic_variables`,
  * and `call_analysis.custom_analysis_data`.
  *
+ * Timestamps are always coerced to `Date` objects. When `strict` is false
+ * (default), required ended/analysis fields include `.catch()` fallbacks for
+ * resilient parsing.
+ *
  * Spread `callSchemaDefaults` and override only what you need:
  *
  * ```ts
@@ -87,7 +98,10 @@ export function createCallSchemas<
   dynamicVariables: TDynVars
   collectedDynamicVariables: TCollected
   analysisData: TAnalysis
+  strict?: boolean
 }) {
+  const strict = config.strict ?? false
+
   // -- Base: all V2CallBase fields, any lifecycle state ---------------------
   const baseFields = z.object({
     call_id: z.string(),
@@ -112,12 +126,16 @@ export function createCallSchemas<
 
   // -- Ended: fields available after the call terminates -------------------
   const endedFields = z.object({
-    /** Milliseconds since epoch. Available once the call starts. */
-    start_timestamp: z.number(),
-    /** Milliseconds since epoch. Available once the call ends. */
-    end_timestamp: z.number(),
+    /** Coerced to Date from Retell's millisecond epoch timestamp. */
+    start_timestamp: strict
+      ? z.coerce.date()
+      : z.coerce.date().catch(new Date(0)),
+    /** Coerced to Date from Retell's millisecond epoch timestamp. */
+    end_timestamp: strict
+      ? z.coerce.date()
+      : z.coerce.date().catch(new Date(0)),
     /** Call duration in milliseconds. */
-    duration_ms: z.number(),
+    duration_ms: strict ? z.number() : z.number().catch(0),
     /** Why the call was disconnected. */
     disconnection_reason: DisconnectionReasonSchema,
     /** Plain-text transcript. May be absent if data storage settings strip it. */
@@ -154,7 +172,7 @@ export function createCallSchemas<
   const ended = z.intersection(base, endedFields)
 
   // -- Analyzed: fields available after post-call analysis -----------------
-  const callAnalysis = createCallAnalysisSchema(config.analysisData)
+  const callAnalysis = createCallAnalysisSchema(config.analysisData, strict)
   const analyzedFields = z.object({
     call_analysis: callAnalysis,
   })

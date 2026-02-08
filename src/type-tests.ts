@@ -49,14 +49,14 @@ function assertDefaultCallTypes() {
   const _meta: { [x: string]: unknown } | undefined = base.metadata
 
   const ended = {} as DefaultEnded
-  const _start: number = ended.start_timestamp
-  const _end: number = ended.end_timestamp
+  const _start: Date = ended.start_timestamp
+  const _end: Date = ended.end_timestamp
   const _dur: number = ended.duration_ms
   const _reason: string = ended.disconnection_reason
 
   const analyzed = {} as DefaultAnalyzed
   const _analysis: {
-    call_summary?: string | undefined
+    call_summary: string
     in_voicemail?: boolean | undefined
     user_sentiment?: "Negative" | "Positive" | "Neutral" | "Unknown" | undefined
     call_successful?: boolean | undefined
@@ -153,7 +153,7 @@ type CustomWebhookEvent = z.infer<typeof customWebhooks.event>
 function assertWebhookTypes() {
   const event = {} as WebhookEvent
   if (event.event === "call_analyzed") {
-    const _ts: number = event.call.start_timestamp
+    const _ts: Date = event.call.start_timestamp
     return _ts
   }
   if (event.event === "chat_analyzed") {
