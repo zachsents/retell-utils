@@ -4,10 +4,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "declaration": true,
-    "declarationMap": true,
     "sourceMap": true,
     "outDir": "dist",
-    "rootDir": "src",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -15,5 +13,5 @@
     "noUncheckedIndexedAccess": true
   },
   "include": ["src"],
-  "exclude": ["src/type-tests.ts", "src/_test_generic.ts"]
+  "exclude": ["src/type-tests.ts"]
 }
