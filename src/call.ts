@@ -138,8 +138,11 @@ export function createCallSchemas<
     end_timestamp: z.coerce.date().catch(new Date(0)),
     /** Call duration in milliseconds. */
     duration_ms: z.number().catch(0),
-    /** Why the call was disconnected. */
-    disconnection_reason: DisconnectionReasonSchema,
+    /**
+     * Why the call was disconnected. Falls back to "error_unknown" if
+     * missing/invalid.
+     */
+    disconnection_reason: DisconnectionReasonSchema.catch("error_unknown"),
     /** Plain-text transcript. May be absent if data storage settings strip it. */
     transcript: z.string().optional(),
     /** Structured transcript with word-level timestamps. */
