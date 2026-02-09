@@ -119,18 +119,21 @@ export function createCallSchemas<
     data_storage_setting: DataStorageSettingSchema.nullable().optional(),
     opt_in_signed_url: z.boolean().optional(),
     /**
-     * Real-time transcript including tool calls. Present during ongoing calls
-     * (e.g. function call webhooks) and after call ends.
+     * Coerced to Date from Retell's millisecond epoch timestamp. Available
+     * after call starts.
      */
-    transcript_with_tool_calls: z.array(TranscriptEntrySchema).optional(),
+    start_timestamp: z.coerce.date().catch(new Date(0)),
+    /**
+     * Real-time transcript including tool calls. Available mid-call with
+     * partial transcripts during function call webhooks, and after call ends.
+     */
+    transcript_with_tool_calls: z.array(TranscriptEntrySchema).prefault([]),
   })
 
   const base = z.intersection(baseFields, CallTypeSchema)
 
   // -- Ended: fields available after the call terminates -------------------
   const endedFields = z.object({
-    /** Coerced to Date from Retell's millisecond epoch timestamp. */
-    start_timestamp: z.coerce.date().catch(new Date(0)),
     /** Coerced to Date from Retell's millisecond epoch timestamp. */
     end_timestamp: z.coerce.date().catch(new Date(0)),
     /** Call duration in milliseconds. */
@@ -159,6 +162,8 @@ export function createCallSchemas<
      * `disconnection_reason` is `"call_transfer"`.
      */
     transfer_destination: z.string().nullable().optional(),
+    /** Coerced to Date. Available after a transfer call ends. */
+    transfer_end_timestamp: z.coerce.date().optional(),
     /** Latency breakdown. Not all sub-metrics are present on every call. */
     latency: CallLatencySchema.optional(),
     call_cost: CallCostSchema.optional(),

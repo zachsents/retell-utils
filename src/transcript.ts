@@ -44,6 +44,8 @@ export const ToolCallResultSchema = z.object({
   tool_call_id: z.string(),
   /** Result of the tool call (string, stringified JSON, etc). */
   content: z.string(),
+  /** Whether the tool call was successful. */
+  successful: z.boolean().optional(),
 })
 
 /** Node transition entry in the transcript (conversation flow agents). */

@@ -48,8 +48,15 @@ function assertDefaultCallTypes() {
 
   // Metadata is always present (prefault) — loose object, never undefined
   const _meta: { [x: string]: unknown } = base.metadata
+  // start_timestamp is in base — available after call starts
+  const _baseStart: Date = base.start_timestamp
+  // transcript_with_tool_calls is prefaulted — always an array
+  const _baseTranscript: z.infer<
+    typeof import("./transcript").TranscriptEntrySchema
+  >[] = base.transcript_with_tool_calls
 
   const ended = {} as DefaultEnded
+  // start_timestamp inherited from base
   const _start: Date = ended.start_timestamp
   const _end: Date = ended.end_timestamp
   const _dur: number = ended.duration_ms
@@ -74,6 +81,8 @@ function assertDefaultCallTypes() {
     _version,
     _status,
     _meta,
+    _baseStart,
+    _baseTranscript,
     _start,
     _end,
     _dur,
@@ -175,7 +184,9 @@ function assertWebhookTypes() {
   if (customEvent.event === "call_started") {
     // Custom metadata flows through webhook schemas
     const _meta: { location_id: string | null } = customEvent.call.metadata
-    return _meta
+    // start_timestamp available on base (call_started)
+    const _ts: Date = customEvent.call.start_timestamp
+    return { _meta, _ts }
   }
 }
 
