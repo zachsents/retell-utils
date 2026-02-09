@@ -15,8 +15,6 @@ const CALL_AGENTS = [
   "agent_5c99a93f3b252cfad546c78db2", // Tier 1 Base
   "agent_9016e2c142d7485c5e3de2239c", // Tier 2 Base
 ]
-const CHAT_AGENT = "agent_a1c4931d36746b1108892fafd6" // Tier 2 Chat
-
 const PER_AGENT = 67
 const CALLS_DIR = join(import.meta.dirname, "..", "test", "fixtures", "calls")
 const CHATS_DIR = join(import.meta.dirname, "..", "test", "fixtures", "chats")
@@ -46,7 +44,9 @@ async function fetchCalls(agentId: string, limit: number) {
   })
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch calls for ${agentId}: ${res.status} ${await res.text()}`)
+    throw new Error(
+      `Failed to fetch calls for ${agentId}: ${res.status} ${await res.text()}`,
+    )
   }
 
   return (await res.json()) as RetellCall[]
@@ -58,11 +58,14 @@ async function fetchChats(limit: number) {
     limit: String(limit),
   })
 
-  const res = await fetch(`https://api.retellai.com/list-chat?${params}`, {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
+  const res = await fetch(
+    `https://api.retellai.com/list-chat?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+      },
     },
-  })
+  )
 
   if (!res.ok) {
     throw new Error(`Failed to fetch chats: ${res.status} ${await res.text()}`)

@@ -2,7 +2,12 @@ import { readdirSync, readFileSync, existsSync } from "node:fs"
 import { join } from "node:path"
 import { describe, test, expect } from "bun:test"
 import { z } from "zod"
-import { CallSchemas, ChatSchemas, callSchemaDefaults, createCallSchemas } from "../src/index"
+import {
+  CallSchemas,
+  ChatSchemas,
+  callSchemaDefaults,
+  createCallSchemas,
+} from "../src/index"
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -249,7 +254,11 @@ describe("opinionated transforms", () => {
   test("invalid phone number for from_number becomes null", () => {
     const schema = z.object({
       call_type: z.literal("phone_call"),
-      from_number: z.string().regex(/^\+[1-9]\d{1,14}$/).nullable().catch(null),
+      from_number: z
+        .string()
+        .regex(/^\+[1-9]\d{1,14}$/)
+        .nullable()
+        .catch(null),
       to_number: z.string().regex(/^\+[1-9]\d{1,14}$/),
       direction: z.enum(["inbound", "outbound"]),
     })
