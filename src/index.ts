@@ -41,6 +41,9 @@ export {
   ChatToolCallResultSchema,
 } from "./chat-messages"
 
+// Phone number validation
+export { E164PhoneSchema, e164OrNullSchema } from "./phone"
+
 // Analysis
 export { createCallAnalysisSchema, createChatAnalysisSchema } from "./analysis"
 

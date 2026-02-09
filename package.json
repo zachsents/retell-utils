@@ -1,6 +1,6 @@
 {
   "name": "retell-utils",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Type-safe Zod schemas for Retell AI API resources with lifecycle-aware discriminated unions and generic customization",
   "type": "module",
   "zshy": {
@@ -14,6 +14,7 @@
     "build": "bun fix && zshy",
     "fix": "oxlint --fix-suggestions --type-aware && prettier --write .",
     "check": "tsc --noEmit && bun run fix",
+    "test": "bun test",
     "prepublishOnly": "bun run build"
   },
   "peerDependencies": {

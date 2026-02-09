@@ -36,7 +36,8 @@ type DefaultAnalyzed = Flatten<z.infer<typeof CallSchemas.analyzed>>
 function assertDefaultCallTypes() {
   const base = {} as DefaultBase
   const _callId: string = base.call_id
-  const _agentId: string = base.agent_id
+  // agent_id is optional (testing scenarios)
+  const _agentId: string | undefined = base.agent_id
   const _version: number = base.agent_version
   const _status:
     | "registered"
@@ -45,21 +46,25 @@ function assertDefaultCallTypes() {
     | "ended"
     | "error" = base.call_status
 
-  // Metadata should be a loose object (passthrough) by default
-  const _meta: { [x: string]: unknown } | undefined = base.metadata
+  // Metadata is always present (prefault) — loose object, never undefined
+  const _meta: { [x: string]: unknown } = base.metadata
 
   const ended = {} as DefaultEnded
   const _start: Date = ended.start_timestamp
   const _end: Date = ended.end_timestamp
   const _dur: number = ended.duration_ms
   const _reason: string = ended.disconnection_reason
+  // recording_url: validated URL or null (z.url().nullable().catch(null))
+  const _recording: string | null = ended.recording_url
 
   const analyzed = {} as DefaultAnalyzed
   const _analysis: {
-    call_summary: string
+    // call_summary: empty strings → null via .min(1).nullable().catch(null)
+    call_summary: string | null
     in_voicemail?: boolean | undefined
     user_sentiment?: "Negative" | "Positive" | "Neutral" | "Unknown" | undefined
     call_successful?: boolean | undefined
+    // analysisData default is z.looseObject({}).optional()
     custom_analysis_data?: { [x: string]: unknown } | undefined
   } = analyzed.call_analysis
 
@@ -73,6 +78,7 @@ function assertDefaultCallTypes() {
     _end,
     _dur,
     _reason,
+    _recording,
     _analysis,
   }
 }
@@ -99,18 +105,19 @@ type CustomAnalyzed = Flatten<z.infer<typeof customCallSchemas.analyzed>>
 
 function assertCustomCallTypes() {
   const base = {} as CustomBase
-  // Metadata should be narrowed to our custom shape
-  const _meta: { location_id: string | null } | undefined = base.metadata
-  const _dynVars: { agent_name: string; timezone: string } | undefined =
+  // Custom metadata — no prefault/optional wrapping, so required
+  const _meta: { location_id: string | null } = base.metadata
+  const _dynVars: { agent_name: string; timezone: string } =
     base.retell_llm_dynamic_variables
 
   const analyzed = {} as CustomAnalyzed
-  const _analysis = analyzed.call_analysis.custom_analysis_data
-  const _check:
-    | { first_name: string | null; should_create_crm_sales_lead: boolean }
-    | undefined = _analysis
+  // Custom analysisData — no optional wrapping, so required
+  const _analysis: {
+    first_name: string | null
+    should_create_crm_sales_lead: boolean
+  } = analyzed.call_analysis.custom_analysis_data
 
-  return { _meta, _dynVars, _check }
+  return { _meta, _dynVars, _analysis }
 }
 
 // ---------------------------------------------------------------------------
@@ -130,11 +137,14 @@ function assertChatTypes() {
   const base = {} as DefaultChat
   const _chatId: string = base.chat_id
   const _status: "ongoing" | "ended" | "error" = base.chat_status
+  // Default metadata is prefaulted — always present
+  const _meta: { [x: string]: unknown } = base.metadata
 
   const custom = {} as CustomChat
-  const _meta: { session_id: string } | undefined = custom.metadata
+  // Custom metadata — no wrapping, so required
+  const _customMeta: { session_id: string } = custom.metadata
 
-  return { _chatId, _status, _meta }
+  return { _chatId, _status, _meta, _customMeta }
 }
 
 // ---------------------------------------------------------------------------
@@ -163,8 +173,8 @@ function assertWebhookTypes() {
 
   const customEvent = {} as CustomWebhookEvent
   if (customEvent.event === "call_started") {
-    const _meta: { location_id: string | null } | undefined =
-      customEvent.call.metadata
+    // Custom metadata flows through webhook schemas
+    const _meta: { location_id: string | null } = customEvent.call.metadata
     return _meta
   }
 }

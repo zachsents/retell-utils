@@ -7,6 +7,7 @@ import {
   DisconnectionReasonSchema,
 } from "./enums"
 import { CallLatencySchema } from "./latency"
+import { E164PhoneSchema, e164OrNullSchema } from "./phone"
 import { TimestampedUtteranceSchema, TranscriptEntrySchema } from "./transcript"
 
 // ---------------------------------------------------------------------------
@@ -14,7 +15,10 @@ import { TimestampedUtteranceSchema, TranscriptEntrySchema } from "./transcript"
 // ---------------------------------------------------------------------------
 
 export interface CallSchemaConfig {
-  /** Shape of the `metadata` object. Defaults to a loose (passthrough) object. */
+  /**
+   * Shape of the `metadata` object. Defaults to a loose (passthrough) object
+   * with `.prefault({})`.
+   */
   metadata: z.ZodType
   /** Shape of the `retell_llm_dynamic_variables` object. */
   dynamicVariables: z.ZodType
@@ -25,21 +29,18 @@ export interface CallSchemaConfig {
   collectedDynamicVariables: z.ZodType
   /** Shape of `call_analysis.custom_analysis_data`. */
   analysisData: z.ZodType
-  /**
-   * When true, omits `.catch()` fallbacks so schemas fail fast on unexpected
-   * data. When false (default), required ended/analysis fields use `.catch()`
-   * for resilient webhook parsing.
-   */
-  strict?: boolean
 }
 
-/** Sensible defaults for all configurable fields (loose passthrough objects). */
+/**
+ * Sensible defaults for all configurable fields. Object fields use
+ * `.prefault({})` so they are always present (never undefined). Analysis data
+ * is `.optional()` since not all agents configure custom analysis.
+ */
 export const callSchemaDefaults = {
-  metadata: z.looseObject({}),
-  dynamicVariables: z.looseObject({}),
-  collectedDynamicVariables: z.looseObject({}),
-  analysisData: z.looseObject({}),
-  strict: false,
+  metadata: z.looseObject({}).prefault({}),
+  dynamicVariables: z.looseObject({}).prefault({}),
+  collectedDynamicVariables: z.looseObject({}).prefault({}),
+  analysisData: z.looseObject({}).optional(),
 } satisfies CallSchemaConfig
 
 // ---------------------------------------------------------------------------
@@ -48,8 +49,8 @@ export const callSchemaDefaults = {
 
 const PhoneCallSchema = z.object({
   call_type: z.literal("phone_call"),
-  from_number: z.string().nullable(),
-  to_number: z.string(),
+  from_number: e164OrNullSchema,
+  to_number: E164PhoneSchema,
   direction: z.enum(["inbound", "outbound"]),
   telephony_identifier: z
     .object({ twilio_call_sid: z.string().optional() })
@@ -75,16 +76,21 @@ const CallTypeSchema = z.discriminatedUnion("call_type", [
  * `metadata`, `retell_llm_dynamic_variables`, `collected_dynamic_variables`,
  * and `call_analysis.custom_analysis_data`.
  *
- * Timestamps are always coerced to `Date` objects. When `strict` is false
- * (default), required ended/analysis fields include `.catch()` fallbacks for
- * resilient parsing.
+ * Timestamps are always coerced to `Date` objects. Resilience-sensitive fields
+ * use `.catch()` fallbacks so webhook parsing never fails on unexpected data.
+ * Generic config schemas are used as-is — the defaults provide `.prefault({})`
+ * for always-present object fields.
  *
  * Spread `callSchemaDefaults` and override only what you need:
  *
  * ```ts
  * const schemas = createCallSchemas({
  *   ...callSchemaDefaults,
- *   metadata: z.object({ location_id: z.string() }),
+ *   metadata: z
+ *     .looseObject({
+ *       location_id: z.string().nullable().default(null),
+ *     })
+ *     .prefault({}),
  * })
  * ```
  */
@@ -98,20 +104,17 @@ export function createCallSchemas<
   dynamicVariables: TDynVars
   collectedDynamicVariables: TCollected
   analysisData: TAnalysis
-  strict?: boolean
 }) {
-  const strict = config.strict ?? false
-
   // -- Base: all V2CallBase fields, any lifecycle state ---------------------
   const baseFields = z.object({
     call_id: z.string(),
-    agent_id: z.string(),
+    agent_id: z.string().optional(),
     agent_name: z.string().optional(),
     agent_version: z.number(),
     call_status: CallStatusSchema,
-    metadata: config.metadata.optional(),
-    retell_llm_dynamic_variables: config.dynamicVariables.optional(),
-    collected_dynamic_variables: config.collectedDynamicVariables.optional(),
+    metadata: config.metadata,
+    retell_llm_dynamic_variables: config.dynamicVariables,
+    collected_dynamic_variables: config.collectedDynamicVariables,
     custom_sip_headers: z.record(z.string(), z.string()).optional(),
     data_storage_setting: DataStorageSettingSchema.nullable().optional(),
     opt_in_signed_url: z.boolean().optional(),
@@ -127,15 +130,11 @@ export function createCallSchemas<
   // -- Ended: fields available after the call terminates -------------------
   const endedFields = z.object({
     /** Coerced to Date from Retell's millisecond epoch timestamp. */
-    start_timestamp: strict
-      ? z.coerce.date()
-      : z.coerce.date().catch(new Date(0)),
+    start_timestamp: z.coerce.date().catch(new Date(0)),
     /** Coerced to Date from Retell's millisecond epoch timestamp. */
-    end_timestamp: strict
-      ? z.coerce.date()
-      : z.coerce.date().catch(new Date(0)),
+    end_timestamp: z.coerce.date().catch(new Date(0)),
     /** Call duration in milliseconds. */
-    duration_ms: strict ? z.number() : z.number().catch(0),
+    duration_ms: z.number().catch(0),
     /** Why the call was disconnected. */
     disconnection_reason: DisconnectionReasonSchema,
     /** Plain-text transcript. May be absent if data storage settings strip it. */
@@ -146,7 +145,8 @@ export function createCallSchemas<
     scrubbed_transcript_with_tool_calls: z
       .array(TranscriptEntrySchema)
       .optional(),
-    recording_url: z.string().optional(),
+    /** Valid URL or null. Invalid/empty URLs caught as null. */
+    recording_url: z.url().nullable().catch(null),
     recording_multi_channel_url: z.string().optional(),
     /** Recording without PII. Only present when PII scrubbing is enabled. */
     scrubbed_recording_url: z.string().optional(),
@@ -172,7 +172,7 @@ export function createCallSchemas<
   const ended = z.intersection(base, endedFields)
 
   // -- Analyzed: fields available after post-call analysis -----------------
-  const callAnalysis = createCallAnalysisSchema(config.analysisData, strict)
+  const callAnalysis = createCallAnalysisSchema(config.analysisData)
   const analyzedFields = z.object({
     call_analysis: callAnalysis,
   })

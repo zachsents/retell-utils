@@ -9,7 +9,10 @@ import { ChatMessageEntrySchema } from "./chat-messages"
 // ---------------------------------------------------------------------------
 
 export interface ChatSchemaConfig {
-  /** Shape of the `metadata` object. Defaults to a loose (passthrough) object. */
+  /**
+   * Shape of the `metadata` object. Defaults to a loose (passthrough) object
+   * with `.prefault({})`.
+   */
   metadata: z.ZodType
   /** Shape of the `retell_llm_dynamic_variables` object. */
   dynamicVariables: z.ZodType
@@ -20,21 +23,18 @@ export interface ChatSchemaConfig {
   collectedDynamicVariables: z.ZodType
   /** Shape of `chat_analysis.custom_analysis_data`. */
   analysisData: z.ZodType
-  /**
-   * When true, omits `.catch()` fallbacks so schemas fail fast on unexpected
-   * data. When false (default), required ended/analysis fields use `.catch()`
-   * for resilient webhook parsing.
-   */
-  strict?: boolean
 }
 
-/** Sensible defaults for all configurable fields (loose passthrough objects). */
+/**
+ * Sensible defaults for all configurable fields. Object fields use
+ * `.prefault({})` so they are always present (never undefined). Analysis data
+ * is `.optional()` since not all agents configure custom analysis.
+ */
 export const chatSchemaDefaults = {
-  metadata: z.looseObject({}),
-  dynamicVariables: z.looseObject({}),
-  collectedDynamicVariables: z.looseObject({}),
-  analysisData: z.looseObject({}),
-  strict: false,
+  metadata: z.looseObject({}).prefault({}),
+  dynamicVariables: z.looseObject({}).prefault({}),
+  collectedDynamicVariables: z.looseObject({}).prefault({}),
+  analysisData: z.looseObject({}).optional(),
 } satisfies ChatSchemaConfig
 
 // ---------------------------------------------------------------------------
@@ -46,16 +46,21 @@ export const chatSchemaDefaults = {
  * `metadata`, `retell_llm_dynamic_variables`, `collected_dynamic_variables`,
  * and `chat_analysis.custom_analysis_data`.
  *
- * Timestamps are always coerced to `Date` objects. When `strict` is false
- * (default), required ended/analysis fields include `.catch()` fallbacks for
- * resilient parsing.
+ * Timestamps are always coerced to `Date` objects. Resilience-sensitive fields
+ * use `.catch()` fallbacks so webhook parsing never fails on unexpected data.
+ * Generic config schemas are used as-is — the defaults provide `.prefault({})`
+ * for always-present object fields.
  *
  * Spread `chatSchemaDefaults` and override only what you need:
  *
  * ```ts
  * const schemas = createChatSchemas({
  *   ...chatSchemaDefaults,
- *   metadata: z.object({ location_id: z.string() }),
+ *   metadata: z
+ *     .looseObject({
+ *       location_id: z.string().nullable().default(null),
+ *     })
+ *     .prefault({}),
  * })
  * ```
  */
@@ -69,21 +74,18 @@ export function createChatSchemas<
   dynamicVariables: TDynVars
   collectedDynamicVariables: TCollected
   analysisData: TAnalysis
-  strict?: boolean
 }) {
-  const strict = config.strict ?? false
-
   // -- Base: all fields present from chat creation -------------------------
   const base = z.object({
     chat_id: z.string(),
-    agent_id: z.string(),
+    agent_id: z.string().optional(),
     /** Agent version. */
     version: z.number().nullable().optional(),
     chat_status: ChatStatusSchema,
     chat_type: ChatTypeSchema.optional(),
-    metadata: config.metadata.optional(),
-    retell_llm_dynamic_variables: config.dynamicVariables.optional(),
-    collected_dynamic_variables: config.collectedDynamicVariables.optional(),
+    metadata: config.metadata,
+    retell_llm_dynamic_variables: config.dynamicVariables,
+    collected_dynamic_variables: config.collectedDynamicVariables,
     /** Key-value attributes. Values can be string, number, or boolean. */
     custom_attributes: z
       .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
@@ -95,9 +97,7 @@ export function createChatSchemas<
   // -- Ended: fields available after the chat terminates -------------------
   const endedFields = z.object({
     /** Coerced to Date from Retell's millisecond epoch timestamp. */
-    start_timestamp: strict
-      ? z.coerce.date()
-      : z.coerce.date().catch(new Date(0)),
+    start_timestamp: z.coerce.date().catch(new Date(0)),
     /**
      * Coerced to Date from Retell's millisecond epoch timestamp. Null when chat
      * was force-ended.
@@ -111,7 +111,7 @@ export function createChatSchemas<
   const ended = z.intersection(base, endedFields)
 
   // -- Analyzed: fields available after post-chat analysis -----------------
-  const chatAnalysis = createChatAnalysisSchema(config.analysisData, strict)
+  const chatAnalysis = createChatAnalysisSchema(config.analysisData)
   const analyzedFields = z.object({
     chat_analysis: chatAnalysis,
   })
