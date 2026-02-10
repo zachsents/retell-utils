@@ -1,5 +1,5 @@
 import { checkbox, confirm } from "@inquirer/prompts"
-import { retellPagination } from "retell-utils"
+import { retellPagination } from "@core"
 import z from "zod"
 import { getRetell } from "./agents"
 import * as logger from "./logger"
