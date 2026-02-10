@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/core/package.json
+      - packages/cli/package.json
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    name: Detect version changes
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.diff.outputs.core }}
+      cli: ${{ steps.diff.outputs.cli }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for version bumps
+        id: diff
+        run: |
+          version_changed() {
+            local file="$1"
+            OLD=$(git show HEAD~1:"$file" 2>/dev/null | grep '"version"' | head -1 | sed 's/.*: "//;s/".*//')
+            NEW=$(grep '"version"' "$file" | head -1 | sed 's/.*: "//;s/".*//')
+            [ "$OLD" != "$NEW" ]
+          }
+
+          if version_changed packages/core/package.json; then
+            echo "core=true" >> "$GITHUB_OUTPUT"
+          fi
+          if version_changed packages/cli/package.json; then
+            echo "cli=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  release-core:
+    name: Publish core
+    needs: detect
+    if: needs.detect.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - name: Read version
+        id: info
+        run: |
+          VERSION=$(bun -e "console.log(require('./packages/core/package.json').version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check
+        run: bun run check
+        working-directory: packages/core
+
+      - name: Test
+        run: bun test
+        working-directory: packages/core
+
+      - name: Build
+        run: bun run build
+        working-directory: packages/core
+
+      - name: Publish to npm
+        run: bun publish --access public
+        working-directory: packages/core
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: |
+          gh release create "retell-utils@${{ steps.info.outputs.version }}" \
+            --title "retell-utils@${{ steps.info.outputs.version }}" \
+            --generate-notes \
+            --target "${{ github.sha }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  release-cli:
+    name: Publish CLI
+    needs: detect
+    if: needs.detect.outputs.cli == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - name: Read version
+        id: info
+        run: |
+          VERSION=$(bun -e "console.log(require('./packages/cli/package.json').version)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check
+        run: bun run check
+        working-directory: packages/cli
+
+      - name: Build
+        run: bun run build
+        working-directory: packages/cli
+
+      - name: Publish to npm
+        run: bun publish --access public
+        working-directory: packages/cli
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: |
+          gh release create "retell-cli@${{ steps.info.outputs.version }}" \
+            --title "retell-cli@${{ steps.info.outputs.version }}" \
+            --generate-notes \
+            --target "${{ github.sha }}"
+        env:
+          GH_TOKEN: ${{ github.token }}

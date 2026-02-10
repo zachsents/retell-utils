@@ -1,0 +1,54 @@
+{
+  "name": "retell-utils",
+  "version": "0.3.2",
+  "description": "Type-safe Zod schemas for Retell AI API resources with lifecycle-aware discriminated unions and generic customization",
+  "type": "module",
+  "zshy": {
+    "exports": "./src/index.ts",
+    "cjs": false
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun fix && zshy",
+    "fix": "oxlint --fix-suggestions --type-aware && prettier --write .",
+    "check": "tsc --noEmit && bun run fix",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxlint": "latest",
+    "oxlint-tsgolint": "latest",
+    "prettier": "latest",
+    "prettier-plugin-jsdoc": "^1.8.0",
+    "typescript": "^5.8.3",
+    "zod": "^4.3.5",
+    "zshy": "^0.7.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zachsents/retell-utils"
+  },
+  "keywords": [
+    "retell",
+    "retell-ai",
+    "zod",
+    "schemas",
+    "voice-agent",
+    "type-safety"
+  ],
+  "module": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "retell-cli",
+  "version": "3.9.0",
+  "description": "CLI tool for syncing Retell AI agents between local filesystem and API",
+  "keywords": [
+    "agents",
+    "ai",
+    "cli",
+    "retell",
+    "sync"
+  ],
+  "author": "zachsents",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zachsents/retell-utils",
+    "directory": "packages/cli"
+  },
+  "bin": {
+    "retell": "./dist/cli.js"
+  },
+  "type": "module",
+  "main": "cli.ts",
+  "scripts": {
+    "check": "tsc --noEmit && bun run fix",
+    "fix": "oxlint --type-aware --fix-suggestions && prettier . --write",
+    "build": "bun run check && bun build ./src/cli.ts --target bun --outdir dist",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@inquirer/core": "^10.0.0",
+    "@inquirer/prompts": "^8.1.0",
+    "boxen": "^8.0.1",
+    "chalk": "^5.6.2",
+    "cli-spinners": "^3.3.0",
+    "commander": "^14.0.2",
+    "microdiff": "^1.5.0",
+    "prettier": "3.7.4",
+    "remeda": "^2.32.0",
+    "retell-sdk": "^4.66.0",
+    "retell-utils": "workspace:*",
+    "yaml": "^2.8.2",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxlint": "^1.35.0",
+    "oxlint-tsgolint": "^0.10.0",
+    "prettier-plugin-jsdoc": "^1.8.0",
+    "type-fest": "^5.3.1",
+    "typescript": "^5.9.3"
+  }
+}
