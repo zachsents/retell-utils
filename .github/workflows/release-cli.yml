@@ -1,0 +1,64 @@
+name: Release CLI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - packages/cli/package.json
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for version bump
+        id: diff
+        run: |
+          OLD=$(git show HEAD~1:packages/cli/package.json 2>/dev/null | grep '"version"' | head -1 | sed 's/.*: "//;s/".*//')
+          NEW=$(grep '"version"' packages/cli/package.json | head -1 | sed 's/.*: "//;s/".*//')
+          if [ "$OLD" = "$NEW" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$NEW" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: oven-sh/setup-bun@v2
+        if: steps.diff.outputs.changed == 'true'
+
+      - run: bun install
+        if: steps.diff.outputs.changed == 'true'
+
+      - name: Check
+        if: steps.diff.outputs.changed == 'true'
+        run: bun run check
+        working-directory: packages/cli
+
+      - name: Build
+        if: steps.diff.outputs.changed == 'true'
+        run: bun run build
+        working-directory: packages/cli
+
+      - name: Publish to npm
+        if: steps.diff.outputs.changed == 'true'
+        run: bun publish --access public
+        working-directory: packages/cli
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          gh release create "retell-sync-cli@${{ steps.diff.outputs.version }}" \
+            --title "retell-sync-cli@${{ steps.diff.outputs.version }}" \
+            --generate-notes \
+            --target "${{ github.sha }}"
+        env:
+          GH_TOKEN: ${{ github.token }}

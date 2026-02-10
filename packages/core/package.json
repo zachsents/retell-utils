@@ -1,6 +1,6 @@
 {
   "name": "retell-utils",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Type-safe Zod schemas for Retell AI API resources with lifecycle-aware discriminated unions and generic customization",
   "type": "module",
   "zshy": {
@@ -17,8 +17,8 @@
     "test": "bun test",
     "prepublishOnly": "bun run build"
   },
-  "peerDependencies": {
-    "zod": "^4.0.0"
+  "dependencies": {
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -27,7 +27,6 @@
     "prettier": "latest",
     "prettier-plugin-jsdoc": "^1.8.0",
     "typescript": "^5.8.3",
-    "zod": "^4.3.5",
     "zshy": "^0.7.0"
   },
   "license": "MIT",
