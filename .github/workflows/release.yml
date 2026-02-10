@@ -118,8 +118,8 @@ jobs:
 
       - name: Create GitHub release
         run: |
-          gh release create "retell-cli@${{ steps.info.outputs.version }}" \
-            --title "retell-cli@${{ steps.info.outputs.version }}" \
+          gh release create "retell-sync-cli@${{ steps.info.outputs.version }}" \
+            --title "retell-sync-cli@${{ steps.info.outputs.version }}" \
             --generate-notes \
             --target "${{ github.sha }}"
         env:
