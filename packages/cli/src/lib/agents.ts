@@ -857,6 +857,51 @@ export async function serializeState(
           }
         }
 
+        // Extract display positions into a separate dotfile so cosmetic
+        // UI layout changes don't clutter the main config diff.
+        const roundPos = (p: { x: number; y: number }) => ({
+          x: Math.round(p.x),
+          y: Math.round(p.y),
+        })
+
+        const positions: {
+          begin_tag?: { x: number; y: number }
+          nodes?: Record<string, { x: number; y: number }>
+          components?: Record<string, { x: number; y: number }>
+        } = {}
+
+        if (flowConfig.begin_tag_display_position) {
+          positions.begin_tag = roundPos(flowConfig.begin_tag_display_position)
+          delete flowConfig.begin_tag_display_position
+        }
+
+        if (flowConfig.nodes) {
+          for (const node of flowConfig.nodes) {
+            if (node.id && node.display_position) {
+              ;(positions.nodes ??= {})[node.id] = roundPos(
+                node.display_position,
+              )
+              delete node.display_position
+            }
+          }
+        }
+
+        if (flowConfig.components) {
+          for (const comp of flowConfig.components) {
+            if (comp.name && comp.begin_tag_display_position) {
+              ;(positions.components ??= {})[comp.name] = roundPos(
+                comp.begin_tag_display_position,
+              )
+              delete comp.begin_tag_display_position
+            }
+          }
+        }
+
+        if (Object.keys(positions).length > 0) {
+          files[path.join(agentDirPath, ".positions.json")] =
+            await writeJson(positions)
+        }
+
         // conversation-flow config
         files[path.join(agentDirPath, `conversation-flow.${configExt}`)] =
           isYaml
@@ -1071,6 +1116,35 @@ export async function canonicalizeFromFiles(
           z.looseObject({}),
         )
         await resolveFilePlaceholders(flowConfig, resolveFileContent)
+
+        // Merge display positions from .positions.json back into the flow
+        const positionsFile = fileMap[`${agentDir}/.positions.json`]
+        if (positionsFile) {
+          const positions = readJson(positionsFile, z.looseObject({}))
+          if (positions.begin_tag)
+            flowConfig.begin_tag_display_position = positions.begin_tag
+          if (positions.nodes && Array.isArray(flowConfig.nodes)) {
+            const nodePositions = positions.nodes as Record<
+              string,
+              { x: number; y: number }
+            >
+            for (const node of flowConfig.nodes) {
+              if (node.id && nodePositions[node.id])
+                node.display_position = nodePositions[node.id]
+            }
+          }
+          if (positions.components && Array.isArray(flowConfig.components)) {
+            const compPositions = positions.components as Record<
+              string,
+              { x: number; y: number }
+            >
+            for (const comp of flowConfig.components) {
+              if (comp.name && compPositions[comp.name])
+                comp.begin_tag_display_position = compPositions[comp.name]
+            }
+          }
+        }
+
         conversationFlows.push({
           ...flowConfig,
           _id: agentMeta.response_engine.conversation_flow_id,

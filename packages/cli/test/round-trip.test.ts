@@ -107,11 +107,16 @@ async function prettierNormalize(v: unknown): Promise<unknown> {
 
 /**
  * Returns a description of the first difference found between two values.
- * Treats `undefined`/missing keys and `null`/empty arrays as equivalent.
+ * Treats `undefined`/missing keys and `null`/empty arrays as equivalent. Treats
+ * numbers within 1 of each other as equal (positions are rounded).
  */
 function findFirstDiff(a: unknown, b: unknown, path = ""): string | null {
   if (a === b) return null
   if (a == null && b == null) return null
+
+  // Numbers within 1 are equal (display positions get rounded to integers)
+  if (typeof a === "number" && typeof b === "number" && Math.abs(a - b) < 1)
+    return null
 
   if (Array.isArray(a) && a.length === 0 && b == null) return null
   if (Array.isArray(b) && b.length === 0 && a == null) return null
@@ -236,6 +241,86 @@ describe("round-trip: pull -> serialize -> deserialize", () => {
       expect(fileFlow).toBeDefined()
       const diff = findFirstDiff(apiFlow, fileFlow)
       expect(diff).toBeNull()
+    }
+  })
+})
+
+describe("positions extraction", () => {
+  test("serialized files include .positions.json for flow agents", async () => {
+    const { voiceAgents, chatAgents, conversationFlows, llms } = parseFixtures()
+    const canonical = canonicalizeFromApi({
+      voiceAgents,
+      chatAgents,
+      llms,
+      conversationFlows,
+    })
+    const rawFiles = await serializeState(canonical)
+
+    // Every conversation-flow agent should get a .positions.json
+    const posFiles = Object.keys(rawFiles).filter((k) =>
+      k.endsWith(".positions.json"),
+    )
+    const flowAgentCount =
+      canonical.voiceAgents.filter(
+        (a) => a.response_engine.type === "conversation-flow",
+      ).length +
+      canonical.chatAgents.filter(
+        (a) => a.response_engine.type === "conversation-flow",
+      ).length
+    expect(posFiles).toHaveLength(flowAgentCount)
+
+    // Each positions file should be valid JSON with at least a nodes key
+    for (const [pf, content] of Object.entries(rawFiles)) {
+      if (!pf.endsWith(".positions.json")) continue
+      const parsed = JSON.parse(content)
+      expect(parsed.nodes).toBeDefined()
+      expect(Object.keys(parsed.nodes).length).toBeGreaterThan(0)
+    }
+  })
+
+  test("positions are rounded to integers", async () => {
+    const { voiceAgents, chatAgents, conversationFlows, llms } = parseFixtures()
+    const canonical = canonicalizeFromApi({
+      voiceAgents,
+      chatAgents,
+      llms,
+      conversationFlows,
+    })
+    const rawFiles = await serializeState(canonical)
+
+    for (const [key, content] of Object.entries(rawFiles)) {
+      if (!key.endsWith(".positions.json")) continue
+      const parsed = JSON.parse(content)
+      for (const pos of Object.values(parsed.nodes ?? {})) {
+        const { x, y } = pos as { x: number; y: number }
+        expect(Number.isInteger(x)).toBe(true)
+        expect(Number.isInteger(y)).toBe(true)
+      }
+      if (parsed.begin_tag) {
+        expect(Number.isInteger(parsed.begin_tag.x)).toBe(true)
+        expect(Number.isInteger(parsed.begin_tag.y)).toBe(true)
+      }
+    }
+  })
+
+  test("conversation-flow YAML no longer contains display_position", async () => {
+    const { voiceAgents, chatAgents, conversationFlows, llms } = parseFixtures()
+    const canonical = canonicalizeFromApi({
+      voiceAgents,
+      chatAgents,
+      llms,
+      conversationFlows,
+    })
+    const rawFiles = await serializeState(canonical)
+
+    const flowFiles = Object.entries(rawFiles).filter(([k]) =>
+      k.includes("conversation-flow."),
+    )
+    expect(flowFiles.length).toBeGreaterThan(0)
+
+    for (const [_filename, content] of flowFiles) {
+      expect(content).not.toContain("display_position")
+      expect(content).not.toContain("begin_tag_display_position")
     }
   })
 })
