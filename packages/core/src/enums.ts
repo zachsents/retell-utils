@@ -246,6 +246,23 @@ export const FlowTransitionConditionTypeSchema = z.enum(["prompt", "equation"])
 /** Instruction type within a flow node. */
 export const FlowInstructionTypeSchema = z.enum(["prompt", "static_text"])
 
+/** Comparison operator within a single equation condition. */
+export const EquationOperatorSchema = z.enum([
+  "==",
+  "!=",
+  ">",
+  ">=",
+  "<",
+  "<=",
+  "contains",
+  "not_contains",
+  "exists",
+  "not_exist",
+])
+
+/** Combinator for joining multiple equations in a transition condition. */
+export const EquationCombinatorSchema = z.enum(["||", "&&"])
+
 // ---------------------------------------------------------------------------
 // Voice agent enums
 // ---------------------------------------------------------------------------
@@ -306,3 +323,15 @@ export const LlmToolTypeSchema = z.enum([
   "mcp",
   "send_sms",
 ])
+
+/** HTTP method for custom tool requests. */
+export const ToolHttpMethodSchema = z.enum([
+  "GET",
+  "POST",
+  "PATCH",
+  "PUT",
+  "DELETE",
+])
+
+/** How parameters are encoded in the request body. */
+export const ToolParameterTypeSchema = z.enum(["json", "form"])

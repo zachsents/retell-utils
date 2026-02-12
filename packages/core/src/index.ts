@@ -8,11 +8,15 @@ export {
   DataStorageSettingSchema,
   DenoisingModeSchema,
   DisconnectionReasonSchema,
+  EquationCombinatorSchema,
+  EquationOperatorSchema,
   FlowInstructionTypeSchema,
   FlowNodeTypeSchema,
   FlowTransitionConditionTypeSchema,
   LlmModelSchema,
   LlmToolTypeSchema,
+  ToolHttpMethodSchema,
+  ToolParameterTypeSchema,
   PiiCategorySchema,
   PronunciationAlphabetSchema,
   S2sModelSchema,
@@ -112,6 +116,8 @@ export {
   LlmStateEdgeSchema,
   LlmStateSchema,
   LlmToolSchema,
+  TransferDestinationSchema,
+  TransferOptionSchema,
 } from "./llm"
 
 // Conversation flow config schemas
@@ -119,6 +125,7 @@ export {
   ConversationFlowResponseSchema,
   FlowComponentSchema,
   FlowEdgeSchema,
+  FlowEquationSchema,
   FlowNodeSchema,
   FlowTransitionConditionSchema,
 } from "./flow"

@@ -136,11 +136,13 @@ export const VoiceAgentResponseSchema = z.object({
   response_engine: ResponseEngineSchema,
   voice_id: z.string(),
   last_modification_timestamp: z.number(),
+  channel: z.literal("voice").optional(),
 
   // Identity
   is_published: z.boolean().optional(),
   agent_name: z.string().nullable().optional(),
   version_description: z.string().nullable().optional(),
+  version_title: z.string().nullable().optional(),
 
   // Voice
   voice_model: VoiceModelSchema.nullable().optional(),
@@ -229,20 +231,32 @@ export const ChatAgentResponseSchema = z.object({
   agent_id: z.string(),
   response_engine: ResponseEngineSchema,
   last_modification_timestamp: z.number(),
+  channel: z.literal("chat").optional(),
 
   // Identity
   version: z.number().optional(),
   is_published: z.boolean().optional(),
   agent_name: z.string().nullable().optional(),
+  version_description: z.string().nullable().optional(),
+  version_title: z.string().nullable().optional(),
 
   // Chat behavior
   auto_close_message: z.string().nullable().optional(),
   end_chat_after_silence_ms: z.number().optional(),
+  end_call_after_silence_ms: z.number().optional(),
   language: AgentLanguageSchema.optional(),
 
   // Webhook
   webhook_url: z.string().nullable().optional(),
+  webhook_events: z.array(WebhookEventSchema).nullable().optional(),
   webhook_timeout_ms: z.number().optional(),
+
+  // Post-call analysis (also present on chat agents)
+  post_call_analysis_data: z
+    .array(PostAnalysisFieldSchema)
+    .nullable()
+    .optional(),
+  post_call_analysis_model: LlmModelSchema.nullable().optional(),
 
   // Post-chat analysis
   post_chat_analysis_data: z
@@ -258,6 +272,7 @@ export const ChatAgentResponseSchema = z.object({
   opt_in_signed_url: z.boolean().optional(),
   signed_url_expiration_ms: z.number().nullable().optional(),
   pii_config: PiiConfigSchema.optional(),
+  guardrail_config: GuardrailConfigSchema.optional(),
 
   // Visibility
   is_public: z.boolean().nullable().optional(),

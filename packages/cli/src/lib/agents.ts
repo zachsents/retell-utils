@@ -491,6 +491,8 @@ export function canonicalizeFromApi({
         version,
         last_modification_timestamp: _lmt,
         is_published: _pub,
+        version_title: _vt,
+        version_description: _vd,
         ...rest
       }) => ({ ...rest, _id, _version: version ?? 0 }),
     ),
@@ -500,6 +502,8 @@ export function canonicalizeFromApi({
         version,
         last_modification_timestamp: _lmt,
         is_published: _pub,
+        version_title: _vt,
+        version_description: _vd,
         ...rest
       }) => ({ ...rest, _id, _version: version ?? 0 }),
     ),
@@ -956,7 +960,7 @@ export async function serializeState(
   return files
 }
 
-async function canonicalizeFromFiles(
+export async function canonicalizeFromFiles(
   /**
    * A record where keys are file paths relative to the agents dir and values
    * are file contents.
@@ -1087,9 +1091,10 @@ async function canonicalizeFromFiles(
           }
         : agentMeta.response_engine
 
-    // Strip version_title (not used) and llm_websocket_url (moved to response_engine)
+    // Strip versioning metadata (managed by Retell) and llm_websocket_url (moved to response_engine)
     const {
       version_title: _vt,
+      version_description: _vd,
       llm_websocket_url: _url,
       ...cleanConfig
     } = agentConfig

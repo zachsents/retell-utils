@@ -1,0 +1,2195 @@
+{
+  "voiceAgents": [
+    {
+      "agent_id": "agent_5c99a93f3b252cfad546c78db2",
+      "channel": "voice",
+      "last_modification_timestamp": 1770579606345,
+      "agent_name": "SFR Tier 1 Base",
+      "response_engine": {
+        "type": "conversation-flow",
+        "version": 70,
+        "conversation_flow_id": "conversation_flow_f67e9b9049ad"
+      },
+      "webhook_url": "https://sfr-agents-backend-production.up.railway.app/webhook/event",
+      "webhook_timeout_ms": 15000,
+      "language": "multi",
+      "data_storage_setting": "everything",
+      "opt_in_signed_url": false,
+      "end_call_after_silence_ms": 45000,
+      "post_call_analysis_data": [
+        {
+          "type": "string",
+          "name": "first_name",
+          "description": "The caller's first name."
+        },
+        {
+          "type": "string",
+          "name": "last_name",
+          "description": "The caller's last name."
+        },
+        {
+          "type": "string",
+          "name": "email_address",
+          "description": "The caller's email address, exactly as spoken. Only include if the caller clearly stated a complete, valid email address. Leave empty if any part was unclear, mumbled, or uncertain. Do NOT include guesses, annotations, or question marks (e.g., \"(tv?)\" or \"(?)\" are not allowed). If you cannot confidently transcribe the full email, leave this field empty rather than providing an invalid or partial address."
+        },
+        {
+          "type": "string",
+          "name": "address_query",
+          "description": "A search query to find the caller's address using the Google Places API. This does NOT need to be a complete, validated address. Include whatever location information the caller provided - this could be a full street address, just a city/state, a neighborhood name, or even a partial address. The Places API will attempt to resolve it. Examples of valid queries: \"123 Main St, Jacksonville FL\", \"Orange Park\", \"Fleming Island area\", \"near San Marco\". If no location was mentioned, leave empty. IMPORTANT: This field must contain ONLY the address/location query - no commentary, notes, or explanations. Bad examples that will break the search: \"Conway area (town), no full street address provided\", \"Saint Augustine, FL (full street address and ZIP not provided)\", \"Fayetteville location (caller declined additional address info)\". If you need to add context, use the notes field instead."
+        },
+        {
+          "type": "string",
+          "name": "notes",
+          "description": "Optional brief notes about ambiguous information from the call that doesn't fit cleanly into the structured fields above. Use sparingly - only include if there's genuinely useful context that would otherwise be lost (e.g., \"caller mentioned property is a new construction site with no mailbox yet\", \"address is for a rental property, not primary residence\"). Err on the side of leaving this empty. IMPORTANT: Do NOT repeat any information that will already be in the call summary - this field is only for structured context that doesn't belong in other fields."
+        },
+        {
+          "type": "string",
+          "name": "preferred_callback_number",
+          "description": "The caller's preferred callback number, if they provided one different from the number they called from. Leave empty if they confirmed the calling number is the best number to reach them, or if no callback number was discussed. Format as E.164 with +1 country code (e.g., +19045551234)."
+        },
+        {
+          "type": "boolean",
+          "name": "should_create_crm_sales_lead",
+          "description": "Set to true if the caller is requesting an estimate or quote for paid work (including new installations, replacements, upgrades, or material sales), and this represents a sales opportunity. Set to false for warranty issues, complaints, questions about existing projects already under contract, general inquiries, or support calls with no request for pricing."
+        },
+        {
+          "type": "boolean",
+          "name": "contains_no_content",
+          "description": "Set to true if the call contains no meaningful content or conversation (e.g., silent calls, immediate hangups, wrong numbers, accidental dials, or calls where no substantive interaction occurred). Set to false if any actual conversation or meaningful interaction took place."
+        }
+      ],
+      "version": 70,
+      "is_published": false,
+      "post_call_analysis_model": "gpt-5-mini",
+      "pii_config": {
+        "mode": "post_call",
+        "categories": []
+      },
+      "analysis_successful_prompt": "Evaluate whether the agent seems to have a successful call with the user, where the agent finishes the task, and the call was complete without being cutoff.",
+      "analysis_summary_prompt": "Write a 1-3 sentence summary of the call based on the call transcript. Should capture the important information and actions taken during the call.",
+      "voice_id": "11labs-Hailey",
+      "fallback_voice_ids": ["openai-Chloe"],
+      "voice_temperature": 1.14,
+      "voice_speed": 1.12,
+      "volume": 1,
+      "max_call_duration_ms": 598000,
+      "interruption_sensitivity": 0.8,
+      "ambient_sound": "coffee-shop",
+      "ambient_sound_volume": 0.6,
+      "normalize_for_speech": true,
+      "ring_duration_ms": 40000,
+      "stt_mode": "accurate",
+      "allow_user_dtmf": false,
+      "user_dtmf_options": {}
+    },
+    {
+      "agent_id": "agent_dae32986bea544726a18edcb95",
+      "channel": "voice",
+      "last_modification_timestamp": 1768793034822,
+      "agent_name": "[RETIRED] Fence King",
+      "response_engine": {
+        "type": "retell-llm",
+        "llm_id": "llm_919012843afe92e593dffe165b31",
+        "version": 6
+      },
+      "language": "en-US",
+      "data_storage_setting": "everything",
+      "opt_in_signed_url": false,
+      "version": 6,
+      "is_published": false,
+      "version_title": "Fence King Import",
+      "post_call_analysis_model": "gpt-4.1-mini",
+      "pii_config": {
+        "mode": "post_call",
+        "categories": []
+      },
+      "voice_id": "11labs-Chloe",
+      "voice_temperature": 0.2,
+      "voice_speed": 1.06,
+      "volume": 1,
+      "enable_backchannel": true,
+      "backchannel_frequency": 0.6,
+      "backchannel_words": ["yeah", "uh-huh", "okay"],
+      "max_call_duration_ms": 598000,
+      "interruption_sensitivity": 0.7,
+      "ambient_sound": "coffee-shop",
+      "normalize_for_speech": true,
+      "allow_user_dtmf": true,
+      "user_dtmf_options": {}
+    }
+  ],
+  "chatAgents": [
+    {
+      "agent_id": "agent_a1c4931d36746b1108892fafd6",
+      "channel": "chat",
+      "last_modification_timestamp": 1770450482885,
+      "agent_name": "SFR Tier 2 Chat",
+      "version_description": "repair added (this should be back to the original post-edit version)",
+      "response_engine": {
+        "type": "conversation-flow",
+        "version": 30,
+        "conversation_flow_id": "conversation_flow_44b1a5d68acf"
+      },
+      "webhook_url": "https://sfr-agents-backend-production.up.railway.app/webhook/event",
+      "webhook_timeout_ms": 15000,
+      "language": "multi",
+      "data_storage_setting": "everything",
+      "opt_in_signed_url": false,
+      "end_call_after_silence_ms": 1800000,
+      "post_call_analysis_data": [
+        {
+          "type": "string",
+          "name": "first_name",
+          "description": "The caller's first name."
+        },
+        {
+          "type": "string",
+          "name": "last_name",
+          "description": "The caller's last name."
+        },
+        {
+          "type": "string",
+          "name": "email_address",
+          "description": "The caller's email address, exactly as spoken. Only include if the caller clearly stated a complete, valid email address. Leave empty if any part was unclear, mumbled, or uncertain. Do NOT include guesses, annotations, or question marks (e.g., \"(tv?)\" or \"(?)\" are not allowed). If you cannot confidently transcribe the full email, leave this field empty rather than providing an invalid or partial address."
+        },
+        {
+          "type": "string",
+          "name": "address_query",
+          "description": "A search query to find the caller's address using the Google Places API. This does NOT need to be a complete, validated address. Include whatever location information the caller provided - this could be a full street address, just a city/state, a neighborhood name, or even a partial address. The Places API will attempt to resolve it. Examples of valid queries: \"123 Main St, Jacksonville FL\", \"Orange Park\", \"Fleming Island area\", \"near San Marco\". If no location was mentioned, leave empty. IMPORTANT: This field must contain ONLY the address/location query - no commentary, notes, or explanations. Bad examples that will break the search: \"Conway area (town), no full street address provided\", \"Saint Augustine, FL (full street address and ZIP not provided)\", \"Fayetteville location (caller declined additional address info)\". If you need to add context, use the notes field instead."
+        },
+        {
+          "type": "string",
+          "name": "notes",
+          "description": "Optional brief notes about ambiguous information from the call that doesn't fit cleanly into the structured fields above. Use sparingly - only include if there's genuinely useful context that would otherwise be lost (e.g., \"caller mentioned property is a new construction site with no mailbox yet\", \"address is for a rental property, not primary residence\"). Err on the side of leaving this empty. IMPORTANT: Do NOT repeat any information that will already be in the call summary - this field is only for structured context that doesn't belong in other fields."
+        },
+        {
+          "type": "string",
+          "name": "preferred_callback_number",
+          "description": "The caller's preferred callback number, if they provided one different from the number they called from. Leave empty if they confirmed the calling number is the best number to reach them, or if no callback number was discussed. Format as E.164 with +1 country code (e.g., +19045551234)."
+        },
+        {
+          "type": "boolean",
+          "name": "should_create_crm_sales_lead",
+          "description": "Set to true if the caller is requesting an estimate or quote for paid work (including new installations, replacements, upgrades, or material sales), and this represents a sales opportunity. Set to false for warranty issues, complaints, questions about existing projects already under contract, general inquiries, or support calls with no request for pricing."
+        },
+        {
+          "type": "boolean",
+          "name": "contains_no_content",
+          "description": "Set to true if the chat contains no meaningful content or conversation (e.g., empty messages, immediate exits, test messages, accidental chats, or sessions where no substantive interaction occurred). Set to false if any actual conversation or meaningful interaction took place."
+        }
+      ],
+      "version": 30,
+      "is_published": false,
+      "version_title": "V0 - Pilot Baseline",
+      "post_call_analysis_model": "gpt-5-mini",
+      "pii_config": {
+        "mode": "post_call",
+        "categories": []
+      },
+      "analysis_successful_prompt": "Evaluate whether the agent seems to have a successful call with the user, where the agent finishes the task, and the call was complete without being cutoff.",
+      "analysis_summary_prompt": "Write a 1-3 sentence summary of the call based on the call transcript. Should capture the important information and actions taken during the call.",
+      "end_chat_after_silence_ms": 1800000,
+      "post_chat_analysis_data": [
+        {
+          "type": "string",
+          "name": "first_name",
+          "description": "The caller's first name."
+        },
+        {
+          "type": "string",
+          "name": "last_name",
+          "description": "The caller's last name."
+        },
+        {
+          "type": "string",
+          "name": "email_address",
+          "description": "The caller's email address, exactly as spoken. Only include if the caller clearly stated a complete, valid email address. Leave empty if any part was unclear, mumbled, or uncertain. Do NOT include guesses, annotations, or question marks (e.g., \"(tv?)\" or \"(?)\" are not allowed). If you cannot confidently transcribe the full email, leave this field empty rather than providing an invalid or partial address."
+        },
+        {
+          "type": "string",
+          "name": "address_query",
+          "description": "A search query to find the caller's address using the Google Places API. This does NOT need to be a complete, validated address. Include whatever location information the caller provided - this could be a full street address, just a city/state, a neighborhood name, or even a partial address. The Places API will attempt to resolve it. Examples of valid queries: \"123 Main St, Jacksonville FL\", \"Orange Park\", \"Fleming Island area\", \"near San Marco\". If no location was mentioned, leave empty. IMPORTANT: This field must contain ONLY the address/location query - no commentary, notes, or explanations. Bad examples that will break the search: \"Conway area (town), no full street address provided\", \"Saint Augustine, FL (full street address and ZIP not provided)\", \"Fayetteville location (caller declined additional address info)\". If you need to add context, use the notes field instead."
+        },
+        {
+          "type": "string",
+          "name": "notes",
+          "description": "Optional brief notes about ambiguous information from the call that doesn't fit cleanly into the structured fields above. Use sparingly - only include if there's genuinely useful context that would otherwise be lost (e.g., \"caller mentioned property is a new construction site with no mailbox yet\", \"address is for a rental property, not primary residence\"). Err on the side of leaving this empty. IMPORTANT: Do NOT repeat any information that will already be in the call summary - this field is only for structured context that doesn't belong in other fields."
+        },
+        {
+          "type": "string",
+          "name": "preferred_callback_number",
+          "description": "The caller's preferred callback number, if they provided one different from the number they called from. Leave empty if they confirmed the calling number is the best number to reach them, or if no callback number was discussed. Format as E.164 with +1 country code (e.g., +19045551234)."
+        },
+        {
+          "type": "boolean",
+          "name": "should_create_crm_sales_lead",
+          "description": "Set to true if the caller is requesting an estimate or quote for paid work (including new installations, replacements, upgrades, or material sales), and this represents a sales opportunity. Set to false for warranty issues, complaints, questions about existing projects already under contract, general inquiries, or support calls with no request for pricing."
+        },
+        {
+          "type": "boolean",
+          "name": "contains_no_content",
+          "description": "Set to true if the chat contains no meaningful content or conversation (e.g., empty messages, immediate exits, test messages, accidental chats, or sessions where no substantive interaction occurred). Set to false if any actual conversation or meaningful interaction took place."
+        }
+      ],
+      "post_chat_analysis_model": "gpt-5-mini"
+    }
+  ],
+  "conversationFlows": [
+    {
+      "conversation_flow_id": "conversation_flow_f67e9b9049ad",
+      "version": 70,
+      "global_prompt": "## Role\n\nYou are {{agent_name}}, a friendly and professional representative for Superior Fence & Rail, a comprehensive fencing company serving the {{service_area}}. You answer incoming calls and assist callers in a seamless, human-like way.\n\n## Guardrails\n\nDo Not:\n\n- **CRITICAL** NEVER end the call without saying a proper goodbye.\n\n- Make promises or confirm appointments.\n- Provide pricing or service guarantees.\n- If directly asked, clearly state that you are a digital assistant for Superior Fence & Rail. Do not imply you are human.\n- Say \"Um\", \"Uh\", or any related word tropes.\n- Do not attempt to collect information or perform actions outside of what the current node requests.\n\nDo:\n\n- Collect all information in a conversational manner.\n- Only if asked, mention that you are a digital assistant for Superior Fence & Rail, not a real person.\n- Only ever gather information one question at a time.\n- Respond professionally and empathetically.\n- Acknowledge all concerns politely.\n- Offer to escalate complex questions or requests to the team: \"I don't have that information right now, but I can transfer you to our office team for more help if you'd like.\"\n- Keep responses concise and natural. Avoid long explanations.\n- Always follow the instructions of the current node.\n- You have access to the current time: {{current_time_{{timezone}}}}. You can tell the user the current time if asked.\n\n## Standard For Number/Symbol Pronunciation\n\nWhen confirming numeric and address information, follow these formatting rules to ensure natural and clear communication:\n\n1. Numbers in Identification (House Numbers, Flat Numbers, ZIP Codes, Phone Numbers, etc.)\n\n- Always read each digit individually. Do not convert numbers into full words.\n- Say: \u201cseven zero one zero Meadow Avenue\u201d, not \u201cseven thousand ten Meadow Avenue\u201d.\n- Say: \"one one four\", not \"one hundred and fourteen\".\n- Say: \"one zero zero two seven\", not \"ten thousand twenty-seven\".\n\n2. Numeric Values for Amounts (Budget, Price, Payment, etc.)\n\n- Speak full numbers naturally.\n- Say: \u201cfour hundred and seventy-two dollars\u201d, not \u201cfour seven two dollars\u201d.\n- Say: \u201cone thousand fifty-three dollars\u201d, not \u201cone zero five three dollars\u201d.\n\n3. Ordinals (e.g., \u201c124th\u201d, \u201c2nd\u201d)\n\n- Read ordinals naturally, not digit by digit.\n- Say: \u201cone twenty-fourth\u201d, not \u201cone two four T H\u201d.\n- Say: \u201csecond\u201d, not \u201ctwo N D\u201d.\n- The suffixes st, nd, rd, th should be spoken as ordinals, not as individual letters.\n\nExample (Address Handling):\n\nFor the address \"114 W 124th St, New York, NY 10027\", the agent should say: \"One one four west one twenty-fourth street, New York, New York, one zero zero two seven\"\n\nPRONUNCIATION OF SPECIAL CHARACTERS IN EMAIL ADDRESSES:\n\n- Please say the following special characters clearly, pronouncing the symbol and, if helpful, its common name:\n\n  # : say 'hash'\n\n  \\_ : say 'underscore'\n  & : say 'ampersand'\n  - : say 'asterisk'\n  * : say 'hyphen'\n\n- When you encounter these characters, say them exactly as their names or explicitly say the symbol. For example:\n\nFor '#\\_&\\*-', say: 'hash, underscore, ampersand, asterisk, hyphen'.\n\nFor 'Code_42#Test&\\*-1', say: 'Code underscore four two hash test ampersand asterisk hyphen one'.\n\nAlways say the special character's name clearly when you encounter it in the email address.\n\n## Essential Business Information (For Reference)\n\n- Service Area: {{service_area}}.\n  If a caller's location is outside the listed areas: Do not say the business does not serve them. Instead, say that coverage can vary and the team will confirm. Proceed with lead capture normally. When unsure, assume possible service and capture the lead.\n- Services Offered (Not Exhaustive): Vinyl Fencing, Wood Fencing, Aluminum Fencing, Chain Link Fencing, Cedar Fencing, Gates & Entry, Railing, Trex Fencing, Pool Fencing, Dog Fencing.\n  Do not assume a service is unavailable if it is not listed or not found in the knowledge base.\n  If uncertain whether a service is offered, use the following response and continue lead capture: \"I'm not entirely sure, but we likely do offer that. The best next step would be to pass your information to our sales team so they can follow up\".\n- Website: www.superiorfenceandrail.com\n- Email: {{contact_email}}\n- Office Phone Number: {{office_phone}}\n- Hours of Operation: 8am - 5pm Monday - Friday\n- Company Location: {{company_location}}\n- Owner: {{owner}}\n\n## Current Call Context\n\n- Current Time: {{current_time_{{timezone}}}}\n- Caller's Phone Number: {{user_number}}\n\n---\n\n{{prompt_additions_global}}\n",
+      "nodes": [
+        {
+          "instruction": {
+            "type": "static_text",
+            "text": "Hi, thanks for calling Superior Fence and Rail, this is {{agent_name}}. How can I help you today?"
+          },
+          "name": "Welcome Node",
+          "edges": [
+            {
+              "condition": "Caller is requesting an estimate.",
+              "id": "edge-1770445149853-z8f40hs8p",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller is requesting an estimate."
+              },
+              "destination_node_id": "node-1770445149819"
+            },
+            {
+              "condition": "Caller would like to cancel or reschedule an existing appointment",
+              "id": "edge-1770445149854-me3dqhswq",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller would like to cancel or reschedule an existing appointment"
+              },
+              "destination_node_id": "node-1770445149820"
+            },
+            {
+              "condition": "Caller just has a general inquiry",
+              "id": "edge-1770445149855-0geb64jzn",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller just has a general inquiry"
+              },
+              "destination_node_id": "node-1770445149829"
+            },
+            {
+              "destination_node_id": "node-1770445149843",
+              "id": "edge-1770445149865-8gkx3lcck",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller has a current project or quote with us"
+              }
+            },
+            {
+              "condition": "Caller has no more questions",
+              "id": "edge-1770445149856-25pkcbzlp",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller is trying to reach a staff member"
+              },
+              "destination_node_id": "node-1770445149843"
+            },
+            {
+              "destination_node_id": "node-1770579130402",
+              "id": "edge-1770445149877-4n1w5nqsn",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller needs a repair"
+              }
+            },
+            {
+              "destination_node_id": "node-1770579061685",
+              "id": "edge-1770578994368-m4yav525t",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller is a Home Depot customer"
+              }
+            }
+          ],
+          "start_speaker": "agent",
+          "id": "start-node-1770445149852",
+          "type": "conversation",
+          "display_position": {
+            "x": 436,
+            "y": -96
+          }
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "You are collecting information to request an estimate (you cannot schedule live).\nCollect these required fields (all must be explicitly obtained):\n\n- Confirm the callers project type/what they want done\n- First + last name\n- Full address including ZIP code\n- Email address\n\nRules:\n\n- Ask one question at a time.\n- Do not read back every detail or do a long confirmation.\n- If the caller refuses or doesn\u2019t know the answer to any of the fields, politely accept \"Not specified\" and continue.\n- These are not the only pieces of information you need for the estimate. Once all fields are captured, transition to the next node.\n- DO NOT tell the caller you've got everything I need to get your estimate request started.\n\n{{prompt_additions_project_details}}\n"
+          },
+          "name": "Collect Estimate Information",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149847",
+              "id": "edge-1770579021236-uva6rg8lc",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller provided their project details, name, and address."
+              }
+            }
+          ],
+          "global_node_setting": {
+            "condition": "If the caller indicates they want an estimate."
+          },
+          "finetune_transition_examples": [],
+          "id": "node-1770445149819",
+          "type": "conversation",
+          "display_position": {
+            "x": 1100,
+            "y": 40
+          }
+        },
+        {
+          "tool_id": "tool-ground-address",
+          "else_edge": {
+            "destination_node_id": "node-1770445149830",
+            "id": "edge-1770445149897-4phxuv91k",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Let me just look up your address to make sure I have it down correctly."
+          },
+          "name": "Ground Address",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149846",
+              "id": "edge-1770445149896-gph2xqrw6",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{ground_result_code}}",
+                    "operator": "==",
+                    "right": "out_of_service"
+                  }
+                ],
+                "operator": "||"
+              }
+            },
+            {
+              "destination_node_id": "node-1770445149848",
+              "id": "edge-1770445149899-9j6bfkix8",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{ground_result_code}}",
+                    "operator": "==",
+                    "right": "needs_confirmation"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "id": "node-1770445149847",
+          "type": "function",
+          "tool_type": "local",
+          "speak_during_execution": true,
+          "display_position": {
+            "x": 1533.7906595849602,
+            "y": 105.14488598357342
+          },
+          "wait_for_result": true
+        },
+        {
+          "name": "Confirm Address",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149847",
+              "id": "edge-1770445149892-3e50jxdqq",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller confirms or corrects their address"
+              }
+            }
+          ],
+          "id": "node-1770445149848",
+          "type": "conversation",
+          "display_position": {
+            "x": 2082.9042661627527,
+            "y": -491.46734537651446
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "The address validation couldn't confirm part of the caller's address. Help them correct it.\n\n**Hint:** {{ground_confirmation_hint}}\n\n- Be conversational and helpful, not robotic. Don't read back every field.\n\n- Focus on what's unclear. If the street number seems wrong, ask them to confirm or repeat it. If the street name might be misspelled or misheard, ask them to spell it out.\n\n- Keep it brief. Something like \"I want to make sure I have your address right - could you spell the street name for me?\" or \"Just to confirm, what's the house number again?\"\n\n- Once they've clarified, you'll validate again automatically.\n\nExample approaches:\n\n> \"I want to make sure I have your address right. Could you spell out the street name for me?\"\n\n> \"Just to double-check - what's the house number?\"\n> \"I may have misheard - is that spelled M-A-I-N Street?\"\n"
+          }
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "Gather the required information to cancel or reschedule an existing estimate or service. Note, you are not able to cancel or reschedule on the call but instead you are collecting information to pass to the estimate team immediately.\n\nRequired information:\n\n- Name\n- Address\n"
+          },
+          "name": "Cancel or Reschedule an Appointment",
+          "edges": [
+            {
+              "condition": "If the caller provided all required information.",
+              "id": "edge-1770445149858-wmdry5w6b",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If the caller provided their name and address."
+              },
+              "destination_node_id": "node-1770445149826"
+            }
+          ],
+          "global_node_setting": {
+            "condition": "If the caller wants to cancel or reschedule an existing appointment."
+          },
+          "id": "node-1770445149820",
+          "type": "conversation",
+          "display_position": {
+            "x": 3300,
+            "y": 2235
+          }
+        },
+        {
+          "name": "Estimate Confirmation",
+          "edges": [
+            {
+              "condition": "Caller has no more questions.",
+              "id": "edge-1770445149859-yt1u5ilu6",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller has no more questions."
+              },
+              "destination_node_id": "node-1770445149825"
+            }
+          ],
+          "id": "node-1770445149821",
+          "type": "conversation",
+          "display_position": {
+            "x": 3850,
+            "y": 470
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "## TASK\n\n- Confirm the callers Name, Address, and Project Request. (Example > \"Perfect, I've got you down as [Name] at [Address] for [Project Request]. Does all of that sound right to you?\" )\n\n## RULES\n\n- (Do not declare \"Name:, Address:, etc.\" Just confirm the information)\n\n- If the caller says anything is incorrect: stop, listen fully, and let them finish spelling or correcting before responding. Do not interrupt. Then repeat the corrected info back for confirmation.\n\n- After everything is confirmed, let them know the team will be in touch and ask if they have any other questions.\n"
+          }
+        },
+        {
+          "transfer_destination": {
+            "type": "predefined",
+            "number": "{{transfer_phone}}"
+          },
+          "edge": {
+            "condition": "Transfer failed",
+            "id": "edge-1770445149861-2e0ppvb5h",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transfer failed"
+            },
+            "destination_node_id": "node-1770445149824"
+          },
+          "instruction": {
+            "type": "static_text",
+            "text": "Transferring you now, please hold."
+          },
+          "name": "Transfer Call w/o Extension",
+          "id": "node-1770445149823",
+          "transfer_option": {
+            "opt_out_initial_message": true,
+            "enable_bridge_audio_cue": true,
+            "type": "warm_transfer",
+            "public_handoff_option": {
+              "type": "prompt",
+              "prompt": "You are now speaking with the live agent, you must tell them why they have just been transferred a call. You must summarize the reason for the call. The caller can still hear this conversation, so please keep this in mind. "
+            },
+            "agent_detection_timeout_ms": 40000
+          },
+          "type": "transfer_call",
+          "display_position": {
+            "x": 3300,
+            "y": 1535
+          },
+          "speak_during_execution": true
+        },
+        {
+          "name": "Transfer Failed",
+          "edges": [
+            {
+              "condition": "If the caller does not have any more questions",
+              "id": "edge-1770445149862-5b8ue161l",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If the caller does not have any more questions"
+              },
+              "destination_node_id": "node-1770445149825"
+            }
+          ],
+          "id": "node-1770445149824",
+          "type": "conversation",
+          "display_position": {
+            "x": 3850,
+            "y": 1470
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Let the caller know that nobody was available in the office just now, but assure them you'll make sure the team gets their information and follows up.\n\nAsk if there's anything else you can help with.\n"
+          }
+        },
+        {
+          "name": "Farewell",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149827",
+              "id": "edge-1770445149876-uj7yj0wou",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller says goodbye"
+              }
+            }
+          ],
+          "id": "node-1770445149825",
+          "type": "conversation",
+          "display_position": {
+            "x": 4400,
+            "y": 2275
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Bid a warm farewell to the caller.\n"
+          }
+        },
+        {
+          "name": "Confirmation",
+          "edges": [
+            {
+              "condition": "Caller has no more questions.",
+              "id": "edge-1770445149864-p7q1cm98l",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller has no more questions."
+              },
+              "destination_node_id": "node-1770445149825"
+            }
+          ],
+          "id": "node-1770445149826",
+          "type": "conversation",
+          "display_position": {
+            "x": 3850,
+            "y": 2245
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Confirm all relevant information if appropriate.\n\nLet the caller know you will be passing this information over to the team and they will take care of it ASAP.\n\nAsk the caller if they have any more questions.\n"
+          }
+        },
+        {
+          "name": "End Call",
+          "id": "node-1770445149827",
+          "type": "end",
+          "speak_during_execution": false,
+          "display_position": {
+            "x": 4950,
+            "y": 2320
+          }
+        },
+        {
+          "name": "After Hours",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149840",
+              "id": "edge-1770445149866-r8lk9n2r8",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller confirms their name and message. "
+              }
+            }
+          ],
+          "id": "node-1770445149828",
+          "type": "conversation",
+          "display_position": {
+            "x": 3300,
+            "y": 3205
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Inform the caller that it is after business hours. Assure them that we will notify our team that they called.\n\nConfirm the following information:\n\n- First and last name\n- What they're calling about / any details they'd like to leave for the team\n"
+          }
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "Answer the callers inquiry to the best of your ability.\n\nDo not answer question you don't know the answer to.\n"
+          },
+          "name": "General Inquiry",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149867-ed7c1ex1l",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller has no more questions"
+              }
+            }
+          ],
+          "global_node_setting": {
+            "condition": "Caller has a general inquiry"
+          },
+          "id": "node-1770445149829",
+          "type": "conversation",
+          "display_position": {
+            "x": 3850,
+            "y": 2745
+          }
+        },
+        {
+          "name": "Adress Not In Service",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149888-7p5my3gdk",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "The caller has no more questions"
+              }
+            }
+          ],
+          "id": "node-1770445149846",
+          "type": "conversation",
+          "display_position": {
+            "x": 3850,
+            "y": -72.89047737761817
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "The address the caller provided doesn't seem to be within our service area. Follow these steps:\n\n- Let the caller know that the address they provided is outside of the Superior Fence & Rail service area.\n\n- Apologize briefly and explain that you'll still pass their information to the local office team for verification, and that someone will follow up with them shortly.\n\n- Then ask if they have any other questions you can help with.\n"
+          }
+        },
+        {
+          "name": "Estimate Information 2",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149838",
+              "id": "edge-1770445149868-i8tlop2ut",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller provided their email, timeline, and budget."
+              }
+            }
+          ],
+          "id": "node-1770445149830",
+          "type": "conversation",
+          "display_position": {
+            "x": 2433.6699217277746,
+            "y": 418.17412381220726
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Continue to collect information to request an estimate. Collect these required fields (all must be explicitly obtained):\n\n- \"What's your timeline for this\"\n- \"Do you have a budget in mind?\"\n- \"When are you available to meet with a sales consultant?\"\n\nRules:\n\n- Ask one question at a time.\n- Do not read back every detail or do a long confirmation.\n- A field is considered \"captured\" when the caller either provides a specific answer OR indicates they don't have one (e.g., \"I'm flexible\", \"no budget\", \"not sure\"). Do NOT re-ask a question if the caller has already addressed it, even vaguely.\n- Once all fields are captured, transition to the next node.\n- When asking about budget, wait for the caller to fully finish their response before acknowledging. Do not say \"Great\" or similar until they've completed their answer.\n- DO NOT tell the caller you've got everything I need to get your estimate request started.\n"
+          }
+        },
+        {
+          "transfer_destination": {
+            "type": "predefined",
+            "number": "{{transfer_phone}}",
+            "extension": "{{transfer_extension}}"
+          },
+          "edge": {
+            "condition": "Transfer failed",
+            "id": "edge-1770445149873-hfxhn4vrd",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Transfer failed"
+            },
+            "destination_node_id": "node-1770445149824"
+          },
+          "instruction": {
+            "type": "static_text",
+            "text": "Transferring you now, please hold."
+          },
+          "name": "Transfer Call w/ Extension",
+          "id": "node-1770445149834",
+          "transfer_option": {
+            "opt_out_initial_message": true,
+            "enable_bridge_audio_cue": true,
+            "type": "warm_transfer",
+            "public_handoff_option": {
+              "type": "prompt",
+              "prompt": "You are now speaking with the live agent, you must tell them why they have just been transferred a call. You must summarize the reason for the call. The caller can still hear this conversation, so please keep this in mind. "
+            },
+            "agent_detection_timeout_ms": 40000
+          },
+          "type": "transfer_call",
+          "display_position": {
+            "x": 3300,
+            "y": 1885
+          },
+          "speak_during_execution": true
+        },
+        {
+          "name": "Call Transfer",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149835",
+              "id": "edge-1770445149860-uycpqiqvu",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller provides any first and last name."
+              }
+            },
+            {
+              "destination_node_id": "node-1770445149835",
+              "id": "edge-1770445149885-df2qc9j5t",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller declines to provide name"
+              }
+            }
+          ],
+          "id": "node-1770445149822",
+          "type": "conversation",
+          "display_position": {
+            "x": 2225.1876292870897,
+            "y": 1459.9663830154384
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Someone wants to talk to our office team. You are about to transfer them.\n\n##TASK\n\n- Let the caller know you will be passing them over to the team.\n\n- Confirm the reason for the transfer\n\n- Confirm the callers first and last name.\n"
+          }
+        },
+        {
+          "name": "Logic Split Node",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149834",
+              "id": "edge-1770445149875-0x6k6eke0",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{transfer_extension}}",
+                    "operator": "exists"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "id": "node-1770445149835",
+          "else_edge": {
+            "destination_node_id": "node-1770445149823",
+            "id": "edge-1770445149874-m88p7i97k",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "type": "branch",
+          "display_position": {
+            "x": 2750,
+            "y": 1510
+          }
+        },
+        {
+          "name": "Callback Number",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149821",
+              "id": "edge-1770445149879-ha7wos44u",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller confirms their callback number"
+              }
+            }
+          ],
+          "id": "node-1770445149838",
+          "type": "conversation",
+          "display_position": {
+            "x": 3007.493239375427,
+            "y": 476.90392339673105
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "## TASK\n\n- Confirm the best callback number.\n\n## RULES\n\n- Say: \"I have you at the number ending in {{user_last_four}}.\" speaking each digit individually.\n\n- Ask if that's the best number to reach them or if they'd prefer a different one.\n"
+          }
+        },
+        {
+          "name": "Callback Number",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149881-v3ku3l1za",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller confirms their callback number"
+              }
+            }
+          ],
+          "id": "node-1770445149840",
+          "type": "conversation",
+          "display_position": {
+            "x": 3850,
+            "y": 3205
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "## TASK\n\n- Confirm the best callback number.\n\n## RULES\n\n- Say: \"I have you at the number ending in {{user_last_four}}.\" speaking each digit individually.\n\n- Ask if that's the best number to reach them or if they'd prefer a different one.\n"
+          }
+        },
+        {
+          "tool_id": "tool-check-office-hours",
+          "else_edge": {
+            "destination_node_id": "node-1770445149828",
+            "id": "node-1770445149843-else-edge",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "name": "Check Office Hours",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149822",
+              "id": "edge-1770445149884-olbia70te",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{is_office_open}}",
+                    "operator": "==",
+                    "right": "true"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "global_node_setting": {
+            "condition": "Caller wants to speak to a member of the staff.",
+            "positive_finetune_examples": [
+              {
+                "transcript": [
+                  {
+                    "content": "I need to speak to someone about my installation tomorrow.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Can I talk to the office? I have questions about my project.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "I'd like to speak to a manager please.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Transfer me to someone who can help with this.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Can you put me through to the office?",
+                    "role": "user"
+                  }
+                ]
+              }
+            ],
+            "negative_finetune_examples": [
+              {
+                "transcript": [
+                  {
+                    "content": "Are you AI?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Are you a real person?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Do you have anyone speak Spanish?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Hi, thanks for calling Superior Fence and Rail, this is Chloe. How can I help you today?",
+                    "role": "agent"
+                  },
+                  {
+                    "content": "Hi, my name is Tad Griffin. We're getting an installation tomorrow.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "I have an installation scheduled for next week.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "I got a quote from you guys last week.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "We have a project with you.",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Hi, thanks for calling Superior Fence and Rail, this is Chloe. How can I help you today?",
+                    "role": "agent"
+                  },
+                  {
+                    "content": "Hi, I have an installation tomorrow. What time should I expect the crew?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Do you guys have any managers that we could talk to as far as the sponsorship?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Is there someone I could talk to about corporate sponsorships?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Would there be anyone who handles partnerships?",
+                    "role": "user"
+                  }
+                ]
+              },
+              {
+                "transcript": [
+                  {
+                    "content": "Do you have a sales manager?",
+                    "role": "user"
+                  }
+                ]
+              }
+            ]
+          },
+          "id": "node-1770445149843",
+          "type": "function",
+          "tool_type": "local",
+          "speak_during_execution": false,
+          "display_position": {
+            "x": 1698.7864377944798,
+            "y": 1572.7835184341448
+          },
+          "wait_for_result": true
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "##TASK\n\n- Inform the caller that Home Depot customers are handled by our inside sales team.\n\n- Inform the caller you will check if the team is available to help right now."
+          },
+          "name": "Home Depot",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149843",
+              "id": "edge-1770579061685-wtaxfv3bz",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller responds"
+              }
+            }
+          ],
+          "global_node_setting": {
+            "condition": "Caller mentions they are a customer from Home Depot"
+          },
+          "id": "node-1770579061685",
+          "type": "conversation",
+          "display_position": {
+            "x": 786.14429772503,
+            "y": 1322.0195942367864
+          }
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "The caller needs a repair for their fence. We first need to determine if their current fence was installed by Superior Fence and Rail.\n\n##TASK \n- Ask the caller if we installed their current fence?"
+          },
+          "name": "Repair Request",
+          "edges": [
+            {
+              "destination_node_id": "node-1770579205086",
+              "id": "edge-1770579130402-mrv2iek8h",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "We did NOT install their current fence."
+              }
+            },
+            {
+              "destination_node_id": "node-1770579234037",
+              "id": "edge-1770579185002-0bro1xxka",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "We installed their current fence."
+              }
+            }
+          ],
+          "global_node_setting": {
+            "condition": "Caller needs a repair."
+          },
+          "id": "node-1770579130402",
+          "type": "conversation",
+          "display_position": {
+            "x": 790.3768444688084,
+            "y": 741.1265842429748
+          }
+        },
+        {
+          "name": "Repair - Needs Estimate",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149819",
+              "id": "edge-1770579205086-urosyuztn",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller responds"
+              }
+            }
+          ],
+          "id": "node-1770579205086",
+          "type": "conversation",
+          "display_position": {
+            "x": 1386.284901594341,
+            "y": 672.8113556611927
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "We did not install this callers fence that they need repairs for. \n\n##TASK\n\n- Inform the caller that since we did not install their fence, the best course of action is to set up a free estimate appointment so we can properly assess the damage. "
+          }
+        },
+        {
+          "name": "Repair Confirm",
+          "edges": [
+            {
+              "destination_node_id": "node-1770579338493",
+              "id": "edge-1770579234037-u2oafvezr",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "Caller provided their name, issue, and address."
+              }
+            }
+          ],
+          "id": "node-1770579234037",
+          "type": "conversation",
+          "display_position": {
+            "x": 1383.0625105952095,
+            "y": 1070.024937960021
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "You are collecting information to submit a repair request for one of our fences. Confirm these required fields (all must be explicitly obtained):\n\n- Caller's Name\n- Caller's Address (including ZIP)\n- Issue they are having that needs repairs.\n\n##RULES\n\n- Ask one question at a time.\n- Do not read back every detail or do a long confirmation.\n- If the caller refuses or doesn\u2019t know the answer to any of the fields, politely accept \"Not specified\" and continue."
+          }
+        },
+        {
+          "name": "Can't Book",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770579338493-m4ovh8b9d",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "The caller has no more questions"
+              }
+            }
+          ],
+          "id": "node-1770579338493",
+          "type": "conversation",
+          "display_position": {
+            "x": 3849.1541319134594,
+            "y": 960.871801170733
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Based on the caller's info, we think they'll be best served by a member of the team.\n\nFollow these steps:\n\n- Let the caller know that based on their info, they'll be best served by a member of the team. You'll be passing their information to the local office team. Someone will follow up with them shortly.\n\n- Then ask if they have any other questions you can help with.\n"
+          }
+        }
+      ],
+      "components": [],
+      "start_node_id": "start-node-1770445149852",
+      "start_speaker": "agent",
+      "tools": [
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "Checks if the office is currently open for call transfers. Returns whether the office is open and a reason explaining the current status.",
+          "type": "custom",
+          "url": "https://sfr-agents-backend-production.up.railway.app/agent/check-office-hours",
+          "tool_id": "tool-check-office-hours",
+          "args_at_root": false,
+          "timeout_ms": 120000,
+          "name": "check_office_hours",
+          "response_variables": {
+            "is_office_open": "isOpen"
+          },
+          "parameters": {
+            "type": "object",
+            "properties": {}
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "Validates ZIP code service area and grounds the street address. Returns confirmed city/state/zip, and either a confirmed street or options to confirm. Automatically detects repeated attempts from transcript and skips confirmation after 2 tries.",
+          "type": "custom",
+          "url": "https://sfr-agents-backend-production.up.railway.app/agent/ground-address",
+          "tool_id": "tool-ground-address",
+          "args_at_root": false,
+          "timeout_ms": 120000,
+          "name": "ground_address",
+          "response_variables": {
+            "ground_error": "error",
+            "ground_confirmation_hint": "confirmationHint",
+            "ground_street_number": "streetNumber",
+            "ground_street": "street",
+            "ground_can_book": "canBook",
+            "ground_city": "city",
+            "ground_result_code": "resultCode",
+            "ground_zip": "zip",
+            "ground_state": "state"
+          },
+          "parameters": {
+            "type": "object",
+            "required": ["streetNumber", "street", "zipCode"],
+            "properties": {
+              "streetNumber": {
+                "type": "string",
+                "description": "House/building number (e.g., '123')"
+              },
+              "zipCode": {
+                "type": "string",
+                "description": "5-digit US postal ZIP code"
+              },
+              "street": {
+                "type": "string",
+                "description": "Street name without number (e.g., 'Main St', 'Oak Avenue')"
+              }
+            }
+          }
+        }
+      ],
+      "model_choice": {
+        "type": "cascading",
+        "model": "gpt-4.1",
+        "high_priority": false
+      },
+      "tool_call_strict_mode": true,
+      "default_dynamic_variables": {
+        "agent_name": "Chloe"
+      },
+      "knowledge_base_ids": ["knowledge_base_e7f5a70f34e049ba"],
+      "kb_config": {
+        "top_k": 3,
+        "filter_score": 0.6
+      },
+      "begin_tag_display_position": {
+        "x": 0,
+        "y": 215
+      },
+      "is_published": false,
+      "flex_mode": false
+    },
+    {
+      "conversation_flow_id": "conversation_flow_44b1a5d68acf",
+      "version": 30,
+      "global_prompt": "## Role\n\nYou are {{agent_name}}, a friendly and professional representative for Superior Fence & Rail, a comprehensive fencing company serving the {{service_area}}. You answer incoming chat messages via a Web Chat and assist users in a seamless, human-like way.\n\n## Guardrails\n\nDo Not:\n\n- **CRITICAL** NEVER end the conversation without saying a proper goodbye.\n\n- Provide pricing or service guarantees.\n- If directly asked, clearly state that you are a digital assistant for Superior Fence & Rail. Do not imply you are human.\n- Say \"Um\", \"Uh\", or any related word tropes.\n- Do not attempt to collect information or perform actions outside of what the current node requests.\n\nDo:\n\n- Collect all information in a conversational manner.\n- Only if asked, mention that you are a digital assistant for Superior Fence & Rail, not a real person.\n- Only ever gather information one question at a time.\n- Respond professionally and empathetically.\n- Acknowledge all concerns politely.\n- Offer to escalate complex questions or requests to the team: \"I don't have that information right now, but I can take down your information for our office team for more help if you'd like.\"\n- Keep responses concise and natural. Avoid long explanations.\n- Always follow the instructions of the current node.\n\n## Essential Business Information (For Reference)\n\n- Service Area: {{service_area}}.\n  If a User's location is outside the listed areas: Do not say the business does not serve them. Instead, say that coverage can vary and the team will confirm. Proceed with lead capture normally. When unsure, assume possible service and capture the lead.\n- Services Offered (Not Exhaustive): Vinyl Fencing, Wood Fencing, Aluminum Fencing, Chain Link Fencing, Cedar Fencing, Gates & Entry, Railing, Trex Fencing, Pool Fencing, Dog Fencing.\n  Do not assume a service is unavailable if it is not listed or not found in the knowledge base.\n  If uncertain whether a service is offered, use the following response and continue lead capture: \"I'm not entirely sure, but we likely do offer that. The best next step would be to pass your information to our sales team so they can follow up\".\n- Website: www.superiorfenceandrail.com\n- Email: {{contact_email}}\n- Office Phone Number: {{office_phone}}\n- Hours of Operation: 8am - 5pm Monday - Friday\n- Company Location: {{company_location}}\n- Owner: {{owner}}\n\n## Current Conversation Context\n\n- Current Time: {{current_time_{{timezone}}}}\n\n{{prompt_additions_global}}\n",
+      "nodes": [
+        {
+          "instruction": {
+            "type": "static_text",
+            "text": "Hey there! My name is {{agent_name}}, How can I help you today?"
+          },
+          "name": "Welcome Node",
+          "edges": [
+            {
+              "condition": "Caller is requesting an estimate.",
+              "id": "edge-1770445149853-z8f40hs8p",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User is requesting an estimate."
+              },
+              "destination_node_id": "node-1770445149819"
+            },
+            {
+              "destination_node_id": "node-1770445149819",
+              "id": "edge-1770445149877-4n1w5nqsn",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User needs a repair"
+              }
+            },
+            {
+              "condition": "Caller would like to cancel or reschedule an existing appointment",
+              "id": "edge-1770445149854-me3dqhswq",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User would like to cancel or reschedule an existing appointment"
+              },
+              "destination_node_id": "node-1770445149820"
+            },
+            {
+              "condition": "Caller just has a general inquiry",
+              "id": "edge-1770445149855-0geb64jzn",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User just has a general inquiry"
+              },
+              "destination_node_id": "node-1770445149829"
+            },
+            {
+              "destination_node_id": "node-1770445149837",
+              "id": "edge-1770445149865-8gkx3lcck",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User has a current project or quote with us"
+              }
+            }
+          ],
+          "start_speaker": "agent",
+          "id": "start-node-1770445149852",
+          "type": "conversation",
+          "display_position": {
+            "x": 550,
+            "y": 170
+          }
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "You are collecting information to book an in person estimate.\nCollect these required fields (all must be explicitly obtained):\n\n- Confirm the User project type/what they want done\n- First and last name\n- Full address including ZIP code\n\nRules:\n\n- Ask one question at a time.\n- Do not read back every detail or do a long confirmation.\n- If the User refuses or doesn\u2019t know the answer to any of the fields, politely accept \"Not specified\" and continue.\n- Once all fields are captured, transition.\n\n{{prompt_additions_project_details}}\n"
+          },
+          "name": "Collect Estimate Information",
+          "edges": [
+            {
+              "condition": "If the caller provided all required information.",
+              "id": "edge-1770445149857-twdqohjdg",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User provided their project details, name, and address."
+              },
+              "destination_node_id": "node-1770445149847"
+            }
+          ],
+          "global_node_setting": {
+            "condition": "If the caller wants to schedule an estimate."
+          },
+          "finetune_transition_examples": [],
+          "id": "node-1770445149819",
+          "type": "conversation",
+          "display_position": {
+            "x": 1100,
+            "y": 170
+          }
+        },
+        {
+          "tool_id": "tool-ground-address",
+          "else_edge": {
+            "destination_node_id": "node-1770445149830",
+            "id": "edge-1770445149897-4phxuv91k",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "instruction": {
+            "type": "static_text",
+            "text": "Let me just look up your address to make sure I have it down correctly."
+          },
+          "name": "Ground Address",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149831",
+              "id": "edge-1770445149899-9j6bfkix8",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{ground_result_code}}",
+                    "operator": "==",
+                    "right": "out_of_service"
+                  }
+                ],
+                "operator": "||"
+              }
+            },
+            {
+              "destination_node_id": "node-1770445149848",
+              "id": "edge-1770445149896-gph2xqrw6",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{ground_result_code}}",
+                    "operator": "==",
+                    "right": "needs_confirmation"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "id": "node-1770445149847",
+          "type": "function",
+          "tool_type": "local",
+          "speak_during_execution": true,
+          "display_position": {
+            "x": 1580.120479603663,
+            "y": 347.55559392193857
+          },
+          "wait_for_result": true
+        },
+        {
+          "tool_id": "tool-get-appointments",
+          "else_edge": {
+            "destination_node_id": "node-1770445149851",
+            "id": "edge-1770445149894-3m813usmg",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Let me see what appointments we have available."
+          },
+          "name": "Get Appointments",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149832",
+              "id": "edge-1770445149893-noyfhzlkc",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{appts_can_book}}",
+                    "operator": "==",
+                    "right": "true"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "id": "node-1770445149849",
+          "type": "function",
+          "tool_type": "local",
+          "speak_during_execution": true,
+          "display_position": {
+            "x": 3094.402437265662,
+            "y": 786.606828369124
+          },
+          "wait_for_result": true
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "Gather the required information to cancel or reschedule an existing estimate or service. Note, you are not able to cancel or reschedule yourself, but instead you are collecting information to pass to the estimate team immediately.\n\nRequired information:\n\n- Name\n- Address\n"
+          },
+          "name": "Cancel or Reschedule an Appointment",
+          "edges": [
+            {
+              "condition": "If the caller provided all required information.",
+              "id": "edge-1770445149858-wmdry5w6b",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "If the user provided their name and address."
+              },
+              "destination_node_id": "node-1770445149826"
+            }
+          ],
+          "global_node_setting": {
+            "condition": "If the caller wants to cancel or reschedule an existing appointment."
+          },
+          "id": "node-1770445149820",
+          "type": "conversation",
+          "display_position": {
+            "x": 4306.991309005224,
+            "y": 1694.4472277806892
+          }
+        },
+        {
+          "name": "Estimate Confirmation",
+          "edges": [
+            {
+              "condition": "Caller has no more questions.",
+              "id": "edge-1770445149859-yt1u5ilu6",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User has no more questions."
+              },
+              "destination_node_id": "node-1770445149825"
+            }
+          ],
+          "id": "node-1770445149821",
+          "type": "conversation",
+          "display_position": {
+            "x": 4947.449884592685,
+            "y": 607.8672100062367
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "## TASK\n\n- Confirm the appointment date, time, and address. (Example > \"Perfect, I've got you down for [Date] at [Time] at [Address]. Does all of that sound right to you?\" )\n\n## RULES\n\n- (Do not declare \"Date:, Address:, etc.\" Just confirm the information)\n\n- If the user says anything is incorrect: stop, listen fully, and let them finish spelling or correcting before responding. Do not interrupt. Then repeat the corrected info back for confirmation.\n\n- After everything is confirmed, let them know their appointment is booked and ask if they have any other questions.\n"
+          }
+        },
+        {
+          "name": "Farewell",
+          "edges": [],
+          "id": "node-1770445149825",
+          "type": "conversation",
+          "display_position": {
+            "x": 5500,
+            "y": 2235
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Bid a warm farewell to the user\n"
+          }
+        },
+        {
+          "name": "Confirmation",
+          "edges": [
+            {
+              "condition": "Caller has no more questions.",
+              "id": "edge-1770445149864-p7q1cm98l",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User has no more questions."
+              },
+              "destination_node_id": "node-1770445149825"
+            }
+          ],
+          "id": "node-1770445149826",
+          "type": "conversation",
+          "display_position": {
+            "x": 4950,
+            "y": 1729.1230029425687
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Confirm all relevant information if appropriate.\n\nConfirm the best callback number.\n\nLet the user know you will be passing this information over to the team and they will take care of it ASAP.\n\nAsk the user if they have any more questions.\n"
+          }
+        },
+        {
+          "instruction": {
+            "type": "prompt",
+            "text": "Answer the users inquiry to the best of your ability.\n\nDo not answer question you don't know the answer to.\n"
+          },
+          "name": "General Inquiry",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149867-ed7c1ex1l",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User has no more questions"
+              }
+            }
+          ],
+          "global_node_setting": {
+            "condition": "Caller has a general inquiry"
+          },
+          "id": "node-1770445149829",
+          "type": "conversation",
+          "display_position": {
+            "x": 4957.639185356905,
+            "y": 2278.040732154779
+          }
+        },
+        {
+          "name": "Can't Book",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149903-crxw8bbp0",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "The user has no more questions"
+              }
+            }
+          ],
+          "id": "node-1770445149851",
+          "type": "conversation",
+          "display_position": {
+            "x": 4950,
+            "y": 1200
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Based on the user's info, they'll be best served by a member of the team.\n\nFollow these steps:\n\n- Let the user know that based on their info, they'll be best served by a member of the team. You'll be passing their information to the local office team. Someone will follow up with them shortly.\n\n- Then ask if they have any other questions you can help with.\n"
+          }
+        },
+        {
+          "name": "Estimate Information 2",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149850",
+              "id": "edge-1770445149869-sluswjg0d",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User provided their email, phone number, and timeline."
+              }
+            }
+          ],
+          "id": "node-1770445149830",
+          "type": "conversation",
+          "display_position": {
+            "x": 2153.6745084993054,
+            "y": 688.7285427650106
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Continue to collect information to book an in person estimate. Collect these required fields (all must be explicitly obtained):\n\n- Email address\n- Phone number\n- \"What's your timeline for this?\"\n\nRules:\n\n- Ask one question at a time.\n- Do not read back every detail or do a long confirmation.\n- If the User refuses or doesn\u2019t know the answer to any of the fields, politely accept \"Not specified\" and continue.\n- Once all fields are captured, transition.\n"
+          }
+        },
+        {
+          "name": "Logic Split Node",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149849",
+              "id": "edge-1770445149901-yodwg2rge",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{ground_can_book}}",
+                    "operator": "==",
+                    "right": "true"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "id": "node-1770445149850",
+          "else_edge": {
+            "destination_node_id": "node-1770445149851",
+            "id": "edge-1770445149902-wmvtakssf",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "type": "branch",
+          "display_position": {
+            "x": 2655.1884661054887,
+            "y": 757.0079418630056
+          }
+        },
+        {
+          "name": "Adress Not In Service",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149870-awdyjbad6",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "The user has no more questions"
+              }
+            }
+          ],
+          "id": "node-1770445149831",
+          "type": "conversation",
+          "display_position": {
+            "x": 4934.368506308227,
+            "y": 92.68540167176697
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "The address the user provided doesn't seem to be within our service area. Follow these steps:\n\n- Let the user know that the address they provided is outside of the Superior Fence & Rail service area.\n\n- Apologize briefly and explain that you\u2019ll still pass their information to the local office team for verification, and that someone will follow up with them shortly.\n\n- Then ask if they have any other questions you can help with.\n"
+          }
+        },
+        {
+          "name": "Offer Appointment Times",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149833",
+              "id": "edge-1770445149872-f4y2nfxv4",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User confirms appointment date and time"
+              }
+            },
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149871-u0gaaj8g6",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User declines to book now, says they will return later, or wants to end the conversation"
+              }
+            }
+          ],
+          "id": "node-1770445149832",
+          "type": "conversation",
+          "display_position": {
+            "x": 3614.3901008071234,
+            "y": 604.9145617107017
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "Offer 2\u20134 start-time options at a time, in a natural list and ask what works for them.\n\nThen confirm appointment date/time.\n\n## Appointment Priority\n\nThe check_zip response contains two lists:\n\n- **nearby**: These are optimized for our team's drive time and should ALWAYS be offered first. Exhaust these options before moving to \"other\".\n- **other**: Additional available slots. Only offer these if the User doesn't like any \"nearby\" options.\n\nDo NOT mention \"nearby\" or \"other\" to the User\u2014instead, frame nearby times as \"we'll be in your neighborhood\":\n\n> \"We'll actually be in your neighborhood on [day]. Does [time] or [time] work for you?\"\n\nor\n\n> \"It looks like we have a team in your area on [day]\u2014would [time] work?\"\n\n## Rules\n\n- When you receive availability results, DO NOT read time ranges (e.g., \"9:30\u201310:00\").\n- Convert each returned slot to a single start time only and speak it as an option (e.g., \"9:30\").\n- Speak times in a consistent voice format: \"8:30\", \"11:00\", \"1:00\" (include \":00\" for on-the-hour), and add \"AM/PM\" if there's any chance of ambiguity.\n- If the customer asks \"how long is the appointment?\", it depends on what needs to be discussed during the appointment, but usually 15-30 minutes.\n- Keep track of the eventId for whichever slot the User selects\u2014you'll need it for booking.\n- If the User proposes a different day/time than what you've looked up, call check_zip again to check availability.\n- If the User declines to book now (wants to check calendar, come back later, etc.), acknowledge gracefully, confirm you have their info on file, and wrap up. Do NOT keep repeating available times after they've declined.\n\n{{appointments_text}}\n"
+          }
+        },
+        {
+          "tool_id": "tool-1768361100311",
+          "else_edge": {
+            "destination_node_id": "node-1770445149851",
+            "id": "node-1770445149833-else-edge",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "name": "Book Appointment",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149832",
+              "id": "edge-1770445149889-2nbqfi6dy",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{booking_result_code}}",
+                    "operator": "==",
+                    "right": "needs_confirmation"
+                  }
+                ],
+                "operator": "||"
+              }
+            },
+            {
+              "destination_node_id": "node-1770445149821",
+              "id": "edge-1770445149890-78o5jy2y9",
+              "transition_condition": {
+                "type": "equation",
+                "equations": [
+                  {
+                    "left": "{{booking_booked}}",
+                    "operator": "==",
+                    "right": "true"
+                  }
+                ],
+                "operator": "||"
+              }
+            }
+          ],
+          "id": "node-1770445149833",
+          "type": "function",
+          "tool_type": "local",
+          "speak_during_execution": false,
+          "display_position": {
+            "x": 4236.951573049252,
+            "y": 768.2236642861847
+          },
+          "wait_for_result": true
+        },
+        {
+          "name": "Confirm Address",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149847",
+              "id": "edge-1770445149892-3e50jxdqq",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User confirms or corrects their address"
+              }
+            }
+          ],
+          "id": "node-1770445149848",
+          "type": "conversation",
+          "display_position": {
+            "x": 2054.5668455406376,
+            "y": -256.0840509628202
+          },
+          "instruction": {
+            "type": "prompt",
+            "text": "The address validation couldn't confirm part of the caller's address. Help them correct it.\n\n**Hint:** {{ground_confirmation_hint}}\n\n- Be conversational and helpful, not robotic. Don't read back every field.\n\n- Focus on what's unclear. If the street number seems wrong, ask them to confirm or repeat it. If the street name might be misspelled or misheard, ask them to spell it out.\n\n- Keep it brief. Something like \"I want to make sure I have your address right - could you spell the street name for me?\" or \"Just to confirm, what's the house number again?\"\n\n- Once they've clarified, you'll validate again automatically.\n\nExample approaches:\n\n> \"I want to make sure I have your address right. Could you spell out the street name for me?\"\n\n> \"Just to double-check - what's the house number?\"\n> \"I may have misheard - is that spelled M-A-I-N Street?\"\n"
+          }
+        },
+        {
+          "name": "Current Project",
+          "edges": [
+            {
+              "destination_node_id": "node-1770445149825",
+              "id": "edge-1770445149878-lmnqqjuw5",
+              "transition_condition": {
+                "type": "prompt",
+                "prompt": "User has no more questions"
+              }
+            }
+          ],
+          "id": "node-1770445149837",
+          "type": "conversation",
+          "display_position": {
+            "x": 4955.729389017679,
+            "y": 2638.7313225150215
+          },
+          "instruction": {
+            "type": "static_text",
+            "text": "Unfortunately I'm unable to see any of your current project details, but you can always call our office at {{office_phone}}, and they'd be happy to assist you. Is there anything else I can help you with today?"
+          }
+        }
+      ],
+      "components": [],
+      "start_node_id": "start-node-1770445149852",
+      "start_speaker": "agent",
+      "tools": [
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "Creates a lead and schedules an appointment. The eventId must come from a previous get_appointments response.",
+          "type": "custom",
+          "url": "https://sfr-agents-backend-production.up.railway.app/agent/book-appointment",
+          "tool_id": "tool-1768361100311",
+          "args_at_root": false,
+          "timeout_ms": 120000,
+          "name": "book_appointment",
+          "response_variables": {
+            "booking_booked": "booked",
+            "booked_appointment_time": "appointmentTime",
+            "booking_error": "error",
+            "booking_result_code": "resultCode"
+          },
+          "parameters": {
+            "type": "object",
+            "required": [
+              "eventId",
+              "firstName",
+              "lastName",
+              "email",
+              "weekday"
+            ],
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "description": "The exact Event ID string. Do not modify or fabricate this value."
+              },
+              "firstName": {
+                "type": "string",
+                "description": "Customer's first name only, no titles or suffixes"
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Customer's last name only, no titles or suffixes"
+              },
+              "zipCode": {
+                "type": "string",
+                "const": "{{ground_zip}}",
+                "description": "Confirmed zip from ground_address"
+              },
+              "city": {
+                "type": "string",
+                "const": "{{ground_city}}",
+                "description": "Confirmed city from ground_address"
+              },
+              "street": {
+                "type": "string",
+                "const": "{{ground_street_number}} {{ground_street}}",
+                "description": "Confirmed street address from ground_address"
+              },
+              "weekday": {
+                "type": "string",
+                "description": "Day of week the customer expects for their appointment (e.g. 'Wed', 'Wednesday'). Used to verify the correct slot before booking."
+              },
+              "state": {
+                "type": "string",
+                "const": "{{ground_state}}",
+                "description": "Confirmed state from ground_address"
+              },
+              "email": {
+                "type": "string",
+                "description": "Customer's email address"
+              }
+            }
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "Validates ZIP code service area and grounds the street address. Returns confirmed city/state/zip, and either a confirmed street or options to confirm. Automatically detects repeated attempts from transcript and skips confirmation after 2 tries.",
+          "type": "custom",
+          "url": "https://sfr-agents-backend-production.up.railway.app/agent/ground-address",
+          "tool_id": "tool-ground-address",
+          "args_at_root": false,
+          "timeout_ms": 120000,
+          "name": "ground_address",
+          "response_variables": {
+            "ground_error": "error",
+            "ground_confirmation_hint": "confirmationHint",
+            "ground_street_number": "streetNumber",
+            "ground_street": "street",
+            "ground_can_book": "canBook",
+            "ground_city": "city",
+            "ground_result_code": "resultCode",
+            "ground_zip": "zip",
+            "ground_state": "state"
+          },
+          "parameters": {
+            "type": "object",
+            "required": ["streetNumber", "street", "zipCode"],
+            "properties": {
+              "streetNumber": {
+                "type": "string",
+                "description": "House/building number (e.g., '123')"
+              },
+              "zipCode": {
+                "type": "string",
+                "description": "5-digit US postal ZIP code"
+              },
+              "street": {
+                "type": "string",
+                "description": "Street name without number (e.g., 'Main St', 'Oak Avenue')"
+              }
+            }
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "tool_id": "tool-get-appointments",
+          "method": "POST",
+          "query_params": {},
+          "args_at_root": false,
+          "timeout_ms": 120000,
+          "name": "get_appointments",
+          "description": "Fetches available appointment slots for booking.",
+          "response_variables": {
+            "appts_can_book": "canBook",
+            "appointments_text": "appointmentsText"
+          },
+          "type": "custom",
+          "url": "https://sfr-agents-backend-production.up.railway.app/agent/get-appointments"
+        }
+      ],
+      "model_choice": {
+        "type": "cascading",
+        "model": "gpt-4.1",
+        "high_priority": false
+      },
+      "default_dynamic_variables": {},
+      "knowledge_base_ids": ["knowledge_base_e7f5a70f34e049ba"],
+      "kb_config": {
+        "top_k": 3,
+        "filter_score": 0.6
+      },
+      "begin_tag_display_position": {
+        "x": 0,
+        "y": 295
+      },
+      "is_published": false,
+      "flex_mode": false
+    }
+  ],
+  "llms": [
+    {
+      "llm_id": "llm_919012843afe92e593dffe165b31",
+      "version": 6,
+      "model": "gpt-4.1",
+      "model_high_priority": false,
+      "general_prompt": "# Role:\n\nYou are Chloe, an AI receptionist for Fence King, a fencing company in Covington Louisiana. You aim to provide efficient, friendly, and reliable support with each interaction, making the customer experience smooth and reassuring. You keep your answers concise, only answer the question, and don't provide unneeded information.\n\nWhen generating responses, aim for a casual and conversational tone. Think of how you might talk to a friend in a relaxed setting. Use informal language and common colloquial expressions such as \"so\", \"yeah\", and \"okay\". Avoid formal language and corporate jargon. Instead, focus on making the dialogue flow naturally, using contractions like \"you're\" instead of \"you are\", and inserting filler words occasionally to mimic natural speech patterns. Strive to make responses sound warm and approachable, using everyday vocabulary and sentence structures. Don't rush your sentences.\n\n# Task:\n\nYour task is to assist customers by managing new business inquiries, transferring calls to the appropriate departments, and answering any questions a caller might have related to fencing.\n\nDO NOT ask them for their business name, but if they do provide you with a business name that seems to be related to a property management or real estate company, you MUST check if it is currently within office hours by running the 'check_time' function. If it is within office hours, you MUST transfer the call by running the 'transfer_call' function. If it is not within office hours, you must take down a message and run the 'take_message' function.\n\nIf someone mentions they are returning a previous call OR calling about an existing job, please be nice and thank them for calling back. Please ask who they are looking to speak to. Please continue to confirm it with them before running any function. To pass on the call, you MUST check if it is currently within office hours, by running the 'check_time' function. If it is within office hours, YOU MUST transfer the call by running the 'transfer_call' function. If it is not within office hours, you must take down a message from the customer and run the 'take_message' function.\n\nALWAYS get the callers first and last name before transferring a call.\n\nDO NOT ask them for their business name.\n\nWhen repeating name, address, email, etc. always SLOWLY repeat this information so the caller can understand.\n\n## Conversation Flow\n\n(You must follow this order unless interrupted by a question. Ask each of these questions individually, do not clump more that 2 questions in one response.)(do not repeat information or clarify unless otherwise prompted)\n\n1. Ask: \u201cAre you an existing customer or a new one?\u201d\n2. If new:\n   - Say \u201cAwesome. Can you tell me a bit about what you\u2019re looking to get done?\u201d\n   - Then: \u201cIs this for a brand new project or an upgrade to existing materials?\u201d\n   - Then ask for full name. (ALWAYS repeat their name and spelling for clarity. For example, G - E - O - R - G - E)\n   - Then ask for address (ALWAYS verify the address with the verify_address function before proceeding. if you don't find a valid address, you can try clarifying the spelling of the street name or asking for a city if they didn't provide one. continue attempting to verify until we get a valid address.)\n   - Then ask for best email. (Clarify slowly. Ex. G - E - O - R - G - E - at - U - S - E - N - A - I - L - dot com)\n   - Then ask for best phone number. (Clarify slowly. Ex. 9 - 7 - 0 - 7 - 0 - 7 - 7 - 8 - 7 - 8)\n   - Then ask how they heard about us.\n\n- Call the 'check_availability' function for our available slots.\n- Offer available times and ask what works for them. (Only offer 2-3 time slots at a time, do not list more than 3 time slots per request. Say this SLOWLY, have a slight pause in between slots so the caller has time to process)\n- If they offer alternative dates/times that you haven't looked up already, you can look them up using the check_availability function.\n  -Then confirm appointment date/time.\n  -Call `book_appointment` function only AFTER time is confirmed.\n  -Once successfully booked, you MUST ask them if they have any further questions. If they state they have no further questions, you can run the 'end_call' function. If they have further questions, you must help answers these questions.\n\n3. If existing:\n   - You MUST check if it is currently within office hours, by running the 'check_time' function. If it is within office hours, YOU MUST transfer the call by running the 'transfer_call' function. If it is not within office hours, you must take down a message from the customer and run the 'take_message' function.\n4. If a business owner, property manager, contractor, etc.:\n   - You MUST check if it is currently within office hours, by running the 'check_time' function. If it is within office hours, YOU MUST transfer the call by running the 'transfer_call' function. If it is not within office hours, you must take down a message from the customer and run the 'take_message' function.\n\n## Accounts:\n\nIf someone requests account/accounting information, you MUST check if it is currently within office hours, by running the 'check_time' function. If it is within office hours, YOU MUST transfer the call by running the 'transfer_call' function. If it is not within office hours, you must take down a message and run the 'take_message' function.\n\n# Context:\n\n## Business:\n\nName: Fence King\nIndustry: Fence service company offering residential & commercial fencing.\nYears in Business: 27\nLocation: 2191 Manton Drive Covington, LA\n\n## Sales Staff Names\n\nDylan\nZach\nTyler\n\n## Services Offered:\n\n### Fencing Services:\n\nAluminum fences, wood fences, Post Master fences, Ranch & Farm Fences, vinyl fences, chain link fences, custom commercial fences, & fence stain/sealing.\n\n## Office Hours:\n\nRegular Office Hours: Monday to Friday, 8 AM to 5 PM.\n\n### After-Hours:\n\nIf someone requests a transfer after hours OR on weekends, please inform them we don't have any team members in the office since it is after hours, but you can take a message and have them get back to you as soon as possible.\n\n## Pricing & Quotes:\n\n### Standard Service Rates:\n\nMention that pricing varies based on the scope of work.\nFree No-Obligation Quotation: We offer a free, no-obligation quote for all our services. NEVER give any pricing information on the call. If asked about pricing or costs, mention how their project manager will be able to give them an exact price based on their needs and materials once we schedule an estimate.\n\n# Critical Notes:\n\nYou MUST wait for them to confirm the correct booking time before booking the appointment.\n\nWhen running the appointment booking function, only include the date and time in the time parameter.\nFor example:\n\"December 5th 3:30pm\"\n\"December 7th 10:00am\"\n\"January 27th 2:00pm\"\n\nDO NOT end your response with \"Let me know if you have any other questions!\". Just answer their questions and if relevant, follow up to see if they would like to schedule a estimate.\n\nIf the address provided by the caller is a unit number, for example, \"U3/661 Smith Road\" or \"2/95 Smith Road,\" these are unit numbers. You must read the address out to the caller properly. For example, \"U3/661\" would be pronounced \"Unit 3 at 661 Smith Road,\" and \"2/95 Smith Road\" would be pronounced \"Unit 2 at 95 Smith Road.\"\n\nDO NOT ALLOW anyone to book estimates not located within our service areas.\n\nService Areas:\n\nWhen asked say \"We serve the I-12 Corridor from Slidell to Baton Rouge.\"\n\nIf caller is within a ZIP not listed, but it sounds close, you should:\n\u2022 Avoid saying \u201cwe don\u2019t service that area.\u201d\n\u2022 Instead say:\n\u201cI\u2019m not 100% sure, but I can grab your info and have the team confirm shortly.\u201d\n\n**Zone 1:**\n\n- 70401\n- 70402\n- 70403\n- 70420\n- 70427\n- 70431\n- 70433\n- 70435\n- 70437\n- 70438\n- 70442\n- 70445\n- 70446\n- 70447\n- 70448\n- 70452\n- 70454\n- 70455\n- 70457\n- 70458\n- 70460\n- 70461\n- 70462\n- 70463\n- 70464\n- 70471\n\n**Zone 2:**\n\n- 70422\n- 70436\n- 70443\n- 70449\n- 70451\n- 70453\n- 70466\n- 70706\n- 70711\n- 70726\n- 70733\n- 70739\n- 70744\n- 70754\n- 70785\n- 70786\n- 70818\n",
+      "general_tools": [
+        {
+          "name": "end_call",
+          "type": "end_call",
+          "description": "Trigger this when we tell the caller to have a nice day or similar. "
+        },
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "Use this to verify the customer address before checking availability. Checking availability depends on having a valid zip code, so we need to make sure the address is correct. If you're not getting correct results, it may be because of a misspelling.",
+          "type": "custom",
+          "url": "https://workflow.dog/x/http/webhook/eJUhXAfw2nQCHTV2bTu2Ns",
+          "timeout_ms": 120000,
+          "speak_after_execution": true,
+          "name": "verify_address",
+          "response_variables": {
+            "found_address": "found_address"
+          },
+          "speak_during_execution": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Address (or partial address) to try and complete",
+                "required": ["address"]
+              }
+            }
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "Gets available appointment times given a customer address. On the first time calling this, you should not include date unless the customer has already explicitly stated a free date. By not including a date, availability will be checked for the next 2 weeks. Then, if the prospect acts to check other dates, you can do that.",
+          "type": "custom",
+          "url": "https://workflow.dog/x/http/url/e1QJKJqqms7ZWhE8XvsCE",
+          "execution_message_description": "Checking the calendar",
+          "timeout_ms": 120000,
+          "speak_after_execution": true,
+          "name": "check_availability",
+          "response_variables": {},
+          "speak_during_execution": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string",
+                "description": "A date to check in YYYY-MM-DD format. If not provided, checks the next 2 weeks."
+              },
+              "customer_address": {
+                "type": "string",
+                "description": "The address of the customer",
+                "required": ["customer_address"]
+              }
+            }
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "form",
+          "method": "POST",
+          "query_params": {},
+          "description": "This function is for taking down messages for the office staff after hours.",
+          "type": "custom",
+          "url": "https://workflow.dog/x/http/webhook/jT2icZnmvgpKaPJuaRHngt",
+          "timeout_ms": 120000,
+          "speak_after_execution": false,
+          "name": "take_message",
+          "response_variables": {},
+          "speak_during_execution": false,
+          "parameters": {
+            "type": "object",
+            "required": ["name", "phone", "email", "message"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The customer's full name."
+              },
+              "message": {
+                "type": "string",
+                "description": "The raw message from the customer explaining what they need."
+              },
+              "phone": {
+                "type": "string",
+                "description": "The customer's phone number in local or international format."
+              },
+              "email": {
+                "type": "string",
+                "description": "The customer's email address."
+              }
+            }
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "json",
+          "method": "POST",
+          "query_params": {},
+          "description": "Run this function to book an appointment.",
+          "type": "custom",
+          "url": "https://workflow.dog/x/http/webhook/qxiY6Qkg3f4Tp5dSWXYrnE",
+          "args_at_root": false,
+          "timeout_ms": 120000,
+          "speak_after_execution": true,
+          "name": "book_appointment",
+          "response_variables": {},
+          "speak_during_execution": false,
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "appointment_start_time": {
+                "type": "string",
+                "description": "Scheduled appointment starting time in ISO format"
+              },
+              "assigned_agent_name": {
+                "type": "object",
+                "description": "Name of the assigned agent (from preselected options)"
+              },
+              "appointment_end_time": {
+                "type": "string",
+                "description": "Scheduled appointment ending time in ISO format"
+              },
+              "customer": {
+                "description": "Information about the prospect",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Full name of the prospect"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Physical address of the prospect"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Phone number of the prospect (can include dashes or spaces)"
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "Email address of the prospect"
+                  }
+                },
+                "required": ["name", "address", "phone", "email"]
+              },
+              "whered_you_hear_about_us": {
+                "type": ["string", "null"],
+                "description": "The customer's answer to \"where'd you hear about us\". If the answer is not in the list, use null.",
+                "enum": [
+                  "Bill Board Denham",
+                  "Bill Board Hwy 22",
+                  "Bill Board I-55",
+                  "Bill Board Walker",
+                  "Coupon - Free Gate",
+                  "Door Hanger Central",
+                  "Door Hanger Covington",
+                  "Door Hanger Denham",
+                  "Door Hanger Mandeville",
+                  "Door Hanger Ponchatoula",
+                  "Facebook",
+                  "Google",
+                  "Google Local Listing",
+                  "Hwy Signs 4x8",
+                  "Mailbox Magnet",
+                  "mySalesman",
+                  "Online Fence Form",
+                  "Online Financing Form",
+                  "Quick Quote Website Pop-Up",
+                  "Referral",
+                  "Repeat Customer",
+                  "Saw a Truck",
+                  "Sign on Fence",
+                  "Sign Out Front (Hwy 190)",
+                  "Yard Sign",
+                  "Yelp",
+                  "Business Associate",
+                  "Marketing Campaign"
+                ]
+              }
+            },
+            "required": [
+              "appointment_start_time",
+              "appointment_end_time",
+              "assigned_agent_name",
+              "customer",
+              "whered_you_hear_about_us"
+            ]
+          }
+        },
+        {
+          "headers": {},
+          "parameter_type": "json",
+          "method": "GET",
+          "query_params": {},
+          "description": "This function is for getting the current date/time.",
+          "type": "custom",
+          "url": "https://workflow.dog/x/http/url/uDmt6sFm5Q4pgmZsWHiY1G",
+          "args_at_root": false,
+          "execution_message_description": "So sorry, just give me one moment here",
+          "timeout_ms": 120000,
+          "speak_after_execution": false,
+          "name": "check_time",
+          "response_variables": {
+            "current time": "current_time"
+          },
+          "speak_during_execution": true
+        },
+        {
+          "name": "transfer_call",
+          "description": "When user is angry or requests a human agent, transfer the call to a human.",
+          "custom_sip_headers": {},
+          "transfer_destination": {
+            "type": "inferred",
+            "prompt": "If the user does not specify who they want to reach, transfer to Pepper at +1(985)-520-4904\nIf the user wants to reach Dan, transfer to +1(985)-520-4904\nIf the user wants to reach Tyler, transfer to +1 (985)-263-1204\nIf the user wants to reach Zach, transfer to +1 (985)-307-9536\nIf the user wants to reach Dylan, transfer to +1 985-335-9313\nIf the user wants to reach Tate, transfer to +1(985)-520-4904"
+          },
+          "transfer_option": {
+            "opt_out_initial_message": false,
+            "public_handoff_option": {
+              "type": "prompt",
+              "prompt": "You are now speaking with the live agent, you must tell them why they have just been transferred a call. You must summarize the reason for the call. The caller can still hear this conversation, so please keep this in mind. "
+            },
+            "on_hold_music": "ringtone",
+            "opt_out_human_detection": false,
+            "enable_bridge_audio_cue": true,
+            "type": "warm_transfer",
+            "private_handoff_option": {
+              "type": "prompt",
+              "prompt": ""
+            },
+            "agent_detection_timeout_ms": 30000,
+            "show_transferee_as_caller": false
+          },
+          "type": "transfer_call"
+        }
+      ],
+      "start_speaker": "agent",
+      "begin_message": "Hey, this is Chloe with Fence King, how can I help you today?",
+      "kb_config": {
+        "top_k": 3,
+        "filter_score": 0.6
+      },
+      "last_modification_timestamp": 1766975700289,
+      "is_published": false
+    }
+  ]
+}
