@@ -1,6 +1,11 @@
 import { z } from "zod"
 import { KbConfigSchema, McpConfigSchema } from "./agent"
-import { LlmModelSchema, S2sModelSchema, StartSpeakerSchema } from "./enums"
+import {
+  LlmModelSchema,
+  LlmToolTypeSchema,
+  S2sModelSchema,
+  StartSpeakerSchema,
+} from "./enums"
 
 // ---------------------------------------------------------------------------
 // Tools & states
@@ -14,7 +19,7 @@ import { LlmModelSchema, S2sModelSchema, StartSpeakerSchema } from "./enums"
  */
 export const LlmToolSchema = z
   .object({
-    type: z.string(),
+    type: LlmToolTypeSchema,
     name: z.string().optional(),
     description: z.string().optional(),
   })

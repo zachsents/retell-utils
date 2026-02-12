@@ -1,6 +1,12 @@
 import { z } from "zod"
 import { KbConfigSchema, McpConfigSchema } from "./agent"
-import { LlmModelSchema, StartSpeakerSchema } from "./enums"
+import {
+  FlowInstructionTypeSchema,
+  FlowNodeTypeSchema,
+  FlowTransitionConditionTypeSchema,
+  LlmModelSchema,
+  StartSpeakerSchema,
+} from "./enums"
 import { LlmToolSchema } from "./llm"
 
 // ---------------------------------------------------------------------------
@@ -9,7 +15,7 @@ import { LlmToolSchema } from "./llm"
 
 /** Transition condition on a flow edge. */
 export const FlowTransitionConditionSchema = z.object({
-  type: z.string().optional(),
+  type: FlowTransitionConditionTypeSchema.optional(),
   prompt: z.string().optional(),
 })
 
@@ -31,10 +37,10 @@ export const FlowNodeSchema = z
   .object({
     id: z.string().optional(),
     name: z.string().optional(),
-    type: z.string().optional(),
+    type: FlowNodeTypeSchema.optional(),
     instruction: z
       .object({
-        type: z.string().optional(),
+        type: FlowInstructionTypeSchema.optional(),
         text: z.string().optional(),
       })
       .optional(),
@@ -69,8 +75,8 @@ export const FlowComponentSchema = z.object({
 
 /** Model selection configuration for conversation flows. */
 const FlowModelChoiceSchema = z.object({
-  type: z.string().optional(),
-  model: LlmModelSchema.nullable().optional(),
+  type: z.literal("cascading"),
+  model: LlmModelSchema,
   high_priority: z.boolean().optional(),
 })
 

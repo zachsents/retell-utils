@@ -3,8 +3,14 @@ import {
   AgentLanguageSchema,
   AmbientSoundSchema,
   DataStorageSettingSchema,
+  DenoisingModeSchema,
   LlmModelSchema,
+  PiiCategorySchema,
+  PronunciationAlphabetSchema,
+  SttModeSchema,
+  VocabSpecializationSchema,
   VoiceEmotionSchema,
+  VoicemailActionTypeSchema,
   VoiceModelSchema,
   WebhookEventSchema,
 } from "./enums"
@@ -50,8 +56,8 @@ export const ResponseEngineSchema = z.discriminatedUnion("type", [
 /** Pronunciation dictionary entry for guiding TTS. */
 export const PronunciationEntrySchema = z.object({
   word: z.string(),
-  alphabet: z.string().optional(),
-  phoneme: z.string().optional(),
+  alphabet: PronunciationAlphabetSchema,
+  phoneme: z.string(),
 })
 
 /** Post-call/chat analysis field definition (polymorphic on `type`). */
@@ -65,8 +71,8 @@ export const PostAnalysisFieldSchema = z.object({
 
 /** PII scrubbing configuration. */
 export const PiiConfigSchema = z.object({
-  mode: z.string().optional(),
-  categories: z.array(z.string()).optional(),
+  mode: z.literal("post_call"),
+  categories: z.array(PiiCategorySchema),
 })
 
 /** Guardrail configuration for input/output topic filtering. */
@@ -97,7 +103,7 @@ export const McpConfigSchema = z.object({
 /** Voicemail detection option with action. */
 const VoicemailOptionSchema = z.object({
   action: z.object({
-    type: z.string(),
+    type: VoicemailActionTypeSchema,
     text: z.string().optional(),
   }),
 })
@@ -105,7 +111,7 @@ const VoicemailOptionSchema = z.object({
 /** IVR detection option with action. */
 const IvrOptionSchema = z.object({
   action: z.object({
-    type: z.string(),
+    type: VoicemailActionTypeSchema,
   }),
 })
 
@@ -160,9 +166,9 @@ export const VoiceAgentResponseSchema = z.object({
 
   // Language & STT
   language: AgentLanguageSchema.optional(),
-  stt_mode: z.string().optional(),
+  stt_mode: SttModeSchema.optional(),
   custom_stt_config: CustomSttConfigSchema.optional(),
-  vocab_specialization: z.string().optional(),
+  vocab_specialization: VocabSpecializationSchema.optional(),
   normalize_for_speech: z.boolean().optional(),
   boosted_keywords: z.array(z.string()).nullable().optional(),
   pronunciation_dictionary: z
@@ -205,7 +211,7 @@ export const VoiceAgentResponseSchema = z.object({
   data_storage_setting: DataStorageSettingSchema.nullable().optional(),
   opt_in_signed_url: z.boolean().optional(),
   signed_url_expiration_ms: z.number().nullable().optional(),
-  denoising_mode: z.string().optional(),
+  denoising_mode: DenoisingModeSchema.optional(),
   pii_config: PiiConfigSchema.optional(),
   guardrail_config: GuardrailConfigSchema.optional(),
 

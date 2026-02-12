@@ -220,3 +220,89 @@ export const WebhookEventSchema = z.enum([
 
 /** Who starts the conversation (used by LLM and conversation flow). */
 export const StartSpeakerSchema = z.enum(["user", "agent"])
+
+// ---------------------------------------------------------------------------
+// Conversation flow enums
+// ---------------------------------------------------------------------------
+
+/** All possible conversation flow node types. */
+export const FlowNodeTypeSchema = z.enum([
+  "conversation",
+  "end",
+  "function",
+  "transfer_call",
+  "press_digit",
+  "branch",
+  "sms",
+  "extract_dynamic_variables",
+  "agent_swap",
+  "mcp",
+  "component",
+])
+
+/** Transition condition type on a flow edge. */
+export const FlowTransitionConditionTypeSchema = z.enum(["prompt", "equation"])
+
+/** Instruction type within a flow node. */
+export const FlowInstructionTypeSchema = z.enum(["prompt", "static_text"])
+
+// ---------------------------------------------------------------------------
+// Voice agent enums
+// ---------------------------------------------------------------------------
+
+/** STT (speech-to-text) mode for voice agents. */
+export const SttModeSchema = z.enum(["fast", "accurate"])
+
+/** Vocabulary specialization mode for voice agents. */
+export const VocabSpecializationSchema = z.enum(["general", "medical"])
+
+/** Audio denoising mode for voice agents. */
+export const DenoisingModeSchema = z.enum([
+  "noise-cancellation",
+  "noise-and-background-speech-cancellation",
+])
+
+/** Phonetic alphabet for pronunciation dictionary entries. */
+export const PronunciationAlphabetSchema = z.enum(["ipa", "cmu"])
+
+/** PII category for scrubbing configuration. */
+export const PiiCategorySchema = z.enum([
+  "person_name",
+  "address",
+  "email",
+  "phone_number",
+  "ssn",
+  "passport",
+  "driver_license",
+  "credit_card",
+  "bank_account",
+  "password",
+  "pin",
+  "medical_id",
+  "date_of_birth",
+])
+
+/** Voicemail detection action type. */
+export const VoicemailActionTypeSchema = z.enum([
+  "prompt",
+  "static_text",
+  "hangup",
+])
+
+// ---------------------------------------------------------------------------
+// LLM tool enums
+// ---------------------------------------------------------------------------
+
+/** LLM tool type discriminator. */
+export const LlmToolTypeSchema = z.enum([
+  "end_call",
+  "transfer_call",
+  "check_availability_cal",
+  "book_appointment_cal",
+  "press_digit",
+  "custom",
+  "extract_dynamic_variable",
+  "agent_swap",
+  "mcp",
+  "send_sms",
+])

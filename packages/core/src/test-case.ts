@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { LlmModelSchema } from "./enums"
 
 /** Zod schema for input match rule types in test case tool mocks. */
 export const InputMatchRuleSchema = z.discriminatedUnion("type", [
@@ -43,5 +44,5 @@ export const TestCaseDefinitionSchema = z.object({
   user_modified_timestamp: z.number(),
   type: z.literal("simulation"),
   tool_mocks: z.array(ToolMockSchema).optional().default([]),
-  llm_model: z.string(),
+  llm_model: LlmModelSchema,
 })
