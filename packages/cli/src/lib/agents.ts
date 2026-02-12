@@ -2,9 +2,15 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import { $ } from "bun"
 import * as R from "remeda"
-import Retell from "retell-sdk"
-import { retellPagination, TestCaseDefinitionSchema } from "@core"
-import type { Except, Promisable } from "type-fest"
+import {
+  ChatAgentResponseSchema,
+  ConversationFlowResponseSchema,
+  LlmResponseSchema,
+  retellPagination,
+  TestCaseDefinitionSchema,
+  VoiceAgentResponseSchema,
+} from "@core"
+import type { Except } from "type-fest"
 import z from "zod"
 import { agentFieldDocs } from "./agent-field-docs"
 import { chatAgentFieldDocs } from "./chat-agent-field-docs"
@@ -27,59 +33,162 @@ import {
   writeYaml,
 } from "./utils"
 
-let _retell: Retell | undefined
+const RETELL_BASE_URL = "https://api.retellai.com"
 
-/** Lazily initialized Retell client. Throws if RETELL_API_KEY is not set. */
-export function getRetell() {
-  if (!_retell) {
-    if (!process.env.RETELL_API_KEY) {
-      throw new Error("RETELL_API_KEY environment variable is not set")
-    }
-    _retell = new Retell({ apiKey: process.env.RETELL_API_KEY })
-  }
-  return _retell
+/** Returns the Retell API key, throwing if not set. */
+export function getApiKey() {
+  const key = process.env.RETELL_API_KEY
+  if (!key) throw new Error("RETELL_API_KEY environment variable is not set")
+  return key
 }
 
-export const READONLY_AGENT_FIELDS = [
-  "last_modification_timestamp",
-  "is_published",
-] as const satisfies Array<keyof Retell.Agent.AgentResponse>
+/**
+ * Thin fetch wrapper for the Retell API. Handles auth header, base URL, and
+ * error checking. Returns the parsed JSON response body, or `undefined` for 204
+ * No Content responses.
+ */
+export async function retellFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<unknown> {
+  const headers = new Headers({
+    Authorization: `Bearer ${getApiKey()}`,
+    "Content-Type": "application/json",
+  })
+  if (init?.headers) {
+    for (const [k, v] of new Headers(init.headers).entries()) {
+      headers.set(k, v)
+    }
+  }
+  const res = await fetch(`${RETELL_BASE_URL}${path}`, { ...init, headers })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Retell API ${res.status}: ${body}`)
+  }
+  if (res.status === 204) return undefined
+  return res.json()
+}
+
+// ---------------------------------------------------------------------------
+// Inferred API response types from core Zod schemas
+// ---------------------------------------------------------------------------
+
+type VoiceAgentResponse = z.infer<typeof VoiceAgentResponseSchema>
+type ChatAgentResponse = z.infer<typeof ChatAgentResponseSchema>
+type LlmResponse = z.infer<typeof LlmResponseSchema>
+type ConversationFlowResponse = z.infer<typeof ConversationFlowResponseSchema>
 
 export type CanonicalVoiceAgent = Except<
-  Retell.Agent.AgentResponse,
-  (typeof READONLY_AGENT_FIELDS)[number] | "agent_id" | "version"
+  VoiceAgentResponse,
+  "last_modification_timestamp" | "is_published" | "agent_id" | "version"
 > & { _id: string; _version: number }
-
-export const READONLY_CHAT_AGENT_FIELDS = [
-  "last_modification_timestamp",
-  "is_published",
-] as const satisfies Array<keyof Retell.ChatAgent.ChatAgentResponse>
 
 export type CanonicalChatAgent = Except<
-  Retell.ChatAgent.ChatAgentResponse,
-  (typeof READONLY_CHAT_AGENT_FIELDS)[number] | "agent_id" | "version"
+  ChatAgentResponse,
+  "last_modification_timestamp" | "is_published" | "agent_id" | "version"
 > & { _id: string; _version: number }
-
-export const READONLY_LLM_FIELDS = [
-  "last_modification_timestamp",
-  "is_published",
-] as const satisfies Array<keyof Retell.Llm.LlmResponse>
 
 export type CanonicalLLM = Except<
-  Retell.Llm.LlmResponse,
-  (typeof READONLY_LLM_FIELDS)[number] | "llm_id" | "version"
+  LlmResponse,
+  "last_modification_timestamp" | "is_published" | "llm_id" | "version"
 > & { _id: string; _version: number }
-
-export const READONLY_CONVERSATION_FLOW_FIELDS = [
-  "is_published",
-] as const satisfies Array<keyof CorrectedConversationFlowResponse>
 
 export type CanonicalConversationFlow = Except<
-  CorrectedConversationFlowResponse,
-  | (typeof READONLY_CONVERSATION_FLOW_FIELDS)[number]
-  | "conversation_flow_id"
-  | "version"
+  ConversationFlowResponse,
+  "is_published" | "conversation_flow_id" | "version"
 > & { _id: string; _version: number }
+
+/** Builds a directory name for an agent (e.g. `my_agent_c78db2`). */
+export function getAgentDirName(agent: {
+  _id: string
+  agent_name?: string | null
+}) {
+  const name = agent.agent_name ?? agent._id
+  return `${toSnakeCase(name)}_${agent._id.slice(-FILE_HASH_LENGTH)}`
+}
+
+/**
+ * Collects agent IDs affected by a set of changes. Includes agents with direct
+ * changes plus agents whose LLMs or conversation flows changed.
+ */
+export function findAffectedAgentIds(
+  changes: {
+    voiceAgents: Array<{ id: string }>
+    chatAgents: Array<{ id: string }>
+    llms: Array<{ id: string }>
+    flows: Array<{ id: string }>
+  },
+  state: CanonicalState,
+): Set<string> {
+  const ids = new Set<string>()
+  for (const c of changes.voiceAgents) ids.add(c.id)
+  for (const c of changes.chatAgents) ids.add(c.id)
+
+  const changedLlmIds = new Set(changes.llms.map((c) => c.id))
+  const changedFlowIds = new Set(changes.flows.map((c) => c.id))
+
+  for (const agent of [...state.voiceAgents, ...state.chatAgents]) {
+    if (
+      agent.response_engine.type === "retell-llm" &&
+      changedLlmIds.has(agent.response_engine.llm_id)
+    ) {
+      ids.add(agent._id)
+    }
+    if (
+      agent.response_engine.type === "conversation-flow" &&
+      changedFlowIds.has(agent.response_engine.conversation_flow_id)
+    ) {
+      ids.add(agent._id)
+    }
+  }
+
+  return ids
+}
+
+/**
+ * Normalizes a canonical agent's response engine for the test-case API, which
+ * requires `version` to be `number | undefined` (not `null`).
+ */
+export function normalizeResponseEngine(
+  re: CanonicalVoiceAgent["response_engine"],
+) {
+  if (re.type === "retell-llm") {
+    return {
+      type: "retell-llm" as const,
+      llm_id: re.llm_id,
+      version: re.version ?? undefined,
+    }
+  }
+  if (re.type === "conversation-flow") {
+    return {
+      type: "conversation-flow" as const,
+      conversation_flow_id: re.conversation_flow_id,
+      version: re.version ?? undefined,
+    }
+  }
+  return undefined
+}
+
+/**
+ * Groups items by an ID property and returns only the latest version of each.
+ * Handles passthrough-typed Zod objects where Remeda's groupByProp chokes on
+ * the `[x: string]: unknown` index signature.
+ */
+function keepLatestVersion<T extends { version?: number }>(
+  items: T[],
+  idKey: keyof T & string,
+): T[] {
+  const map = new Map<string, T>()
+  for (const item of items) {
+    // idKey always refers to a string ID field, but TS can't narrow T[keyof T]
+    const id = item[idKey] as string
+    const existing = map.get(id)
+    if (!existing || (item.version ?? 0) > (existing.version ?? 0)) {
+      map.set(id, item)
+    }
+  }
+  return [...map.values()]
+}
 
 /** Unified state type containing all agent types and their resources. */
 export type CanonicalState = {
@@ -87,6 +196,20 @@ export type CanonicalState = {
   chatAgents: CanonicalChatAgent[]
   llms: CanonicalLLM[]
   conversationFlows: CanonicalConversationFlow[]
+}
+
+/** Builds a query string from retellPagination options. */
+function paginationQuery(opts: {
+  limit?: number
+  pagination_key?: string
+  pagination_key_version?: number
+}) {
+  const p = new URLSearchParams()
+  if (opts.limit) p.set("limit", String(opts.limit))
+  if (opts.pagination_key) p.set("pagination_key", opts.pagination_key)
+  if (opts.pagination_key_version != null)
+    p.set("pagination_key_version", String(opts.pagination_key_version))
+  return p.toString()
 }
 
 /**
@@ -112,17 +235,42 @@ export async function getRemoteState({
     return getRemoteStateByVersion(agentIds, version)
   }
 
-  const client = getRetell()
   const [allVoiceAgents, allChatAgents, llms, conversationFlows] =
     await Promise.all([
-      retellPagination((opts) => client.agent.list(opts), "agent_id"),
-      retellPagination((opts) => client.chatAgent.list(opts), "agent_id"),
-      retellPagination((opts) => client.llm.list(opts), "llm_id"),
       retellPagination(
-        (opts) =>
-          client.conversationFlow.list(opts) as Promise<
-            CorrectedConversationFlowResponse[]
-          >,
+        async (opts) =>
+          z
+            .array(VoiceAgentResponseSchema)
+            .parse(await retellFetch(`/list-agents?${paginationQuery(opts)}`)),
+        "agent_id",
+      ),
+      retellPagination(
+        async (opts) =>
+          z
+            .array(ChatAgentResponseSchema)
+            .parse(
+              await retellFetch(`/list-chat-agents?${paginationQuery(opts)}`),
+            ),
+        "agent_id",
+      ),
+      retellPagination(
+        async (opts) =>
+          z
+            .array(LlmResponseSchema)
+            .parse(
+              await retellFetch(`/list-retell-llms?${paginationQuery(opts)}`),
+            ),
+        "llm_id",
+      ),
+      retellPagination(
+        async (opts) =>
+          z
+            .array(ConversationFlowResponseSchema)
+            .parse(
+              await retellFetch(
+                `/list-conversation-flows?${paginationQuery(opts)}`,
+              ),
+            ),
         "conversation_flow_id",
       ),
     ])
@@ -160,21 +308,20 @@ async function getRemoteStateByVersion(
 ): Promise<CanonicalState> {
   // Try to retrieve each agent at the specified version
   // We don't know which are voice vs chat agents, so we try both
-  const client = getRetell()
   const results = await Promise.all(
     agentIds.map(async (id) => {
       // Try voice agent first
       try {
-        const agent = await client.agent.retrieve(id, {
-          query: { version },
-        })
+        const agent = VoiceAgentResponseSchema.parse(
+          await retellFetch(`/get-agent/${id}?version=${version}`),
+        )
         return { type: "voice" as const, agent }
       } catch {
         // If not found as voice agent, try chat agent
         try {
-          const agent = await client.chatAgent.retrieve(id, {
-            query: { version },
-          })
+          const agent = ChatAgentResponseSchema.parse(
+            await retellFetch(`/get-chat-agent/${id}?version=${version}`),
+          )
           return { type: "chat" as const, agent }
         } catch {
           throw new Error(
@@ -186,8 +333,8 @@ async function getRemoteStateByVersion(
     }),
   )
 
-  const voiceAgents: Retell.Agent.AgentResponse[] = []
-  const chatAgents: Retell.ChatAgent.ChatAgentResponse[] = []
+  const voiceAgents: VoiceAgentResponse[] = []
+  const chatAgents: ChatAgentResponse[] = []
 
   for (const result of results) {
     if (result.type === "voice") {
@@ -224,20 +371,28 @@ async function getRemoteStateByVersion(
   }
 
   // Fetch the specific versions of LLMs and flows referenced by the agents
+  const versionParam = (id: string, versions: Map<string, number>) => {
+    const v = versions.get(id)
+    return v != null ? `?version=${v}` : ""
+  }
+
   const [llms, conversationFlows] = await Promise.all([
     Promise.all(
-      [...llmIds].map((id) =>
-        client.llm.retrieve(id, {
-          query: { version: llmVersions.get(id) },
-        }),
+      [...llmIds].map(async (id) =>
+        LlmResponseSchema.parse(
+          await retellFetch(
+            `/get-retell-llm/${id}${versionParam(id, llmVersions)}`,
+          ),
+        ),
       ),
     ),
     Promise.all(
-      [...flowIds].map(
-        (id) =>
-          client.conversationFlow.retrieve(id, {
-            query: { version: flowVersions.get(id) },
-          }) as Promise<CorrectedConversationFlowResponse>,
+      [...flowIds].map(async (id) =>
+        ConversationFlowResponseSchema.parse(
+          await retellFetch(
+            `/get-conversation-flow/${id}${versionParam(id, flowVersions)}`,
+          ),
+        ),
       ),
     ),
   ])
@@ -260,35 +415,16 @@ export function canonicalizeFromApi({
   llms,
   conversationFlows,
 }: {
-  voiceAgents: Retell.Agent.AgentResponse[]
-  chatAgents: Retell.ChatAgent.ChatAgentResponse[]
-  llms: Retell.Llm.LlmResponse[]
-  conversationFlows: CorrectedConversationFlowResponse[]
-}): {
-  voiceAgents: CanonicalVoiceAgent[]
-  chatAgents: CanonicalChatAgent[]
-  llms: CanonicalLLM[]
-  conversationFlows: CanonicalConversationFlow[]
-} {
-  // get latest version of each unique voice agent
-  const latestVoiceAgents = R.pipe(
-    voiceAgentsList,
-    R.groupByProp("agent_id"),
-    R.mapValues((items) =>
-      R.firstBy(items, [(item) => item.version ?? 0, "desc"]),
-    ),
-    R.values(),
-  )
+  voiceAgents: VoiceAgentResponse[]
+  chatAgents: ChatAgentResponse[]
+  llms: LlmResponse[]
+  conversationFlows: ConversationFlowResponse[]
+}): CanonicalState {
+  // Get latest version of each unique voice agent (single-pass grouping)
+  const latestVoiceAgents = keepLatestVersion(voiceAgentsList, "agent_id")
 
-  // get latest version of each unique chat agent
-  const latestChatAgents = R.pipe(
-    chatAgentsList,
-    R.groupByProp("agent_id"),
-    R.mapValues((items) =>
-      R.firstBy(items, [(item) => item.version ?? 0, "desc"]),
-    ),
-    R.values(),
-  )
+  // Get latest version of each unique chat agent
+  const latestChatAgents = keepLatestVersion(chatAgentsList, "agent_id")
 
   // Combine all agents for finding required resources
   const allLatestAgents = [
@@ -302,74 +438,89 @@ export function canonicalizeFromApi({
     })),
   ]
 
-  // find only relevant conversation flows (used by both voice and chat agents)
-  const requiredConversationFlows = R.pipe(
-    allLatestAgents,
-    R.map((a) =>
-      conversationFlows.find(
-        (cf) =>
+  // Find only relevant conversation flows (used by both voice and chat agents)
+  const flowKey = (id: string, v: number | undefined) => `${id}:${v}`
+  const requiredFlowKeys = new Set(
+    allLatestAgents
+      .filter((a) => a.response_engine.type === "conversation-flow")
+      .map((a) => {
+        const re = a.response_engine
+        if (re.type !== "conversation-flow") return ""
+        return flowKey(re.conversation_flow_id, re.version ?? undefined)
+      }),
+  )
+  const requiredConversationFlows = conversationFlows.filter(
+    (cf) =>
+      requiredFlowKeys.has(flowKey(cf.conversation_flow_id, cf.version)) &&
+      allLatestAgents.some(
+        (a) =>
           a.response_engine.type === "conversation-flow" &&
           a.response_engine.conversation_flow_id === cf.conversation_flow_id &&
           a.response_engine.version === cf.version &&
           a.is_published === cf.is_published,
       ),
-    ),
-    R.filter(R.isTruthy),
-    R.uniqueBy((cf) => `${cf.conversation_flow_id}:${cf.version}`),
   )
 
-  // find only relevant LLMs (used by both voice and chat agents)
-  const requiredLLMs = R.pipe(
-    allLatestAgents,
-    R.map((a) =>
-      llms.find(
-        (llm) =>
+  // Find only relevant LLMs (used by both voice and chat agents)
+  const llmKey = (id: string, v: number | undefined) => `${id}:${v}`
+  const requiredLlmKeys = new Set(
+    allLatestAgents
+      .filter((a) => a.response_engine.type === "retell-llm")
+      .map((a) => {
+        const re = a.response_engine
+        if (re.type !== "retell-llm") return ""
+        return llmKey(re.llm_id, re.version ?? undefined)
+      }),
+  )
+  const requiredLLMs = llms.filter(
+    (llm) =>
+      requiredLlmKeys.has(llmKey(llm.llm_id, llm.version)) &&
+      allLatestAgents.some(
+        (a) =>
           a.response_engine.type === "retell-llm" &&
           a.response_engine.llm_id === llm.llm_id &&
           a.response_engine.version === llm.version &&
           a.is_published === llm.is_published,
       ),
-    ),
-    R.filter(R.isTruthy),
-    R.uniqueBy((llm) => `${llm.llm_id}:${llm.version}`),
   )
 
   return {
     voiceAgents: latestVoiceAgents.map(
-      // version_title exists in API but not SDK types, strip it via cast
       ({
         agent_id: _id,
         version,
         version_title: _versionTitle,
+        last_modification_timestamp: _lmt,
+        is_published: _pub,
         ...rest
-      }: Retell.Agent.AgentResponse & { version_title?: string }) =>
-        R.omit({ ...rest, _id, _version: version ?? 0 }, [
-          "last_modification_timestamp",
-          "is_published",
-        ]),
+      }) => ({ ...rest, _id, _version: version ?? 0 }),
     ),
     chatAgents: latestChatAgents.map(
-      // version_title exists in API but not SDK types, strip it via cast
       ({
         agent_id: _id,
         version,
         version_title: _versionTitle,
+        last_modification_timestamp: _lmt,
+        is_published: _pub,
         ...rest
-      }: Retell.ChatAgent.ChatAgentResponse & { version_title?: string }) =>
-        R.omit({ ...rest, _id, _version: version ?? 0 }, [
-          "last_modification_timestamp",
-          "is_published",
-        ]),
+      }) => ({ ...rest, _id, _version: version ?? 0 }),
     ),
-    llms: requiredLLMs.map(({ llm_id: _id, version, ...rest }) =>
-      R.omit({ ...rest, _id, _version: version ?? 0 }, [
-        "is_published",
-        "last_modification_timestamp",
-      ]),
+    llms: requiredLLMs.map(
+      ({
+        llm_id: _id,
+        version,
+        last_modification_timestamp: _lmt,
+        is_published: _pub,
+        ...rest
+      }) => ({ ...rest, _id, _version: version ?? 0 }),
     ),
     conversationFlows: requiredConversationFlows.map(
-      ({ conversation_flow_id: _id, version, ...rest }) =>
-        R.omit({ ...rest, _id, _version: version ?? 0 }, ["is_published"]),
+      ({
+        conversation_flow_id: _id,
+        version,
+        is_published: _pub,
+        ...rest
+      }) => ({ ...rest, _id, _version: version }),
     ),
   }
 }
@@ -665,6 +816,7 @@ export async function serializeState(
 
           for (const node of flowConfig.nodes) {
             if (
+              node.id &&
               node.type === "conversation" &&
               node.instruction?.type === "prompt" &&
               typeof node.instruction.text === "string" &&
@@ -716,9 +868,7 @@ export async function serializeState(
 
   // Serialize voice agents
   for (const agent of state.voiceAgents) {
-    const agentName = agent.agent_name ?? agent._id
-    const hash = agent._id.slice(-FILE_HASH_LENGTH)
-    const agentDirName = `${toSnakeCase(agentName)}_${hash}`
+    const agentDirName = getAgentDirName(agent)
     const agentDirPath = path.join(agentsDir, agentDirName)
 
     // .agent.json - immutable metadata (IDs, versions, response engine reference)
@@ -739,30 +889,31 @@ export async function serializeState(
       _id: _agentId,
       _version: _agentVersion,
       response_engine: _responseEngine,
-      ...agentConfig
+      ...voiceAgentConfig
     } = agent
 
     // For custom-llm, the llm_websocket_url goes in config (it's mutable)
-    if (agent.response_engine.type === "custom-llm") {
-      ;(agentConfig as Record<string, unknown>).llm_websocket_url =
-        agent.response_engine.llm_websocket_url
-    }
+    const configToWrite =
+      agent.response_engine.type === "custom-llm"
+        ? {
+            ...voiceAgentConfig,
+            llm_websocket_url: agent.response_engine.llm_websocket_url,
+          }
+        : voiceAgentConfig
 
     await serializeResponseEngine(agent, agentDirPath)
 
     // config file (yaml, jsonc, or json based on configFormat)
     files[path.join(agentDirPath, `config.${configExt}`)] = isYaml
-      ? await writeYaml(agentConfig, { comments: agentFieldDocs })
+      ? await writeYaml(configToWrite, { comments: agentFieldDocs })
       : isJsonc
-        ? await writeJsonc(agentConfig, { comments: agentFieldDocs })
-        : await writeJson(agentConfig)
+        ? await writeJsonc(configToWrite, { comments: agentFieldDocs })
+        : await writeJson(configToWrite)
   }
 
   // Serialize chat agents
   for (const agent of state.chatAgents) {
-    const agentName = agent.agent_name ?? agent._id
-    const hash = agent._id.slice(-FILE_HASH_LENGTH)
-    const agentDirName = `${toSnakeCase(agentName)}_${hash}`
+    const agentDirName = getAgentDirName(agent)
     const agentDirPath = path.join(agentsDir, agentDirName)
 
     // .agent.json - immutable metadata (IDs, versions, response engine reference)
@@ -782,23 +933,26 @@ export async function serializeState(
       _id: _agentId,
       _version: _agentVersion,
       response_engine: _responseEngine,
-      ...agentConfig
+      ...chatAgentConfig
     } = agent
 
     // For custom-llm, the llm_websocket_url goes in config (it's mutable)
-    if (agent.response_engine.type === "custom-llm") {
-      ;(agentConfig as Record<string, unknown>).llm_websocket_url =
-        agent.response_engine.llm_websocket_url
-    }
+    const chatConfigToWrite =
+      agent.response_engine.type === "custom-llm"
+        ? {
+            ...chatAgentConfig,
+            llm_websocket_url: agent.response_engine.llm_websocket_url,
+          }
+        : chatAgentConfig
 
     await serializeResponseEngine(agent, agentDirPath)
 
     // config file (yaml, jsonc, or json based on configFormat)
     files[path.join(agentDirPath, `config.${configExt}`)] = isYaml
-      ? await writeYaml(agentConfig, { comments: chatAgentFieldDocs })
+      ? await writeYaml(chatConfigToWrite, { comments: chatAgentFieldDocs })
       : isJsonc
-        ? await writeJsonc(agentConfig, { comments: chatAgentFieldDocs })
-        : await writeJson(agentConfig)
+        ? await writeJsonc(chatConfigToWrite, { comments: chatAgentFieldDocs })
+        : await writeJson(chatConfigToWrite)
   }
 
   return files
@@ -878,7 +1032,7 @@ async function canonicalizeFromFiles(
     )
 
     // Create resolver function for file placeholders
-    const resolveFileContent = (filePath: string): Promisable<string> => {
+    const resolveFileContent = (filePath: string) => {
       // Remove leading ./ if present
       const normalizedPath = filePath.replace(/^\.\//, "")
       const fullPath = `${agentDir}/${normalizedPath}`
@@ -893,14 +1047,19 @@ async function canonicalizeFromFiles(
     await resolveFilePlaceholders(agentConfig, resolveFileContent)
 
     // Handle response engine type (custom-llm has no linked resource, others do)
+    // Note: casts below are necessary because configs are parsed with
+    // z.looseObject({}) for forward compatibility -- the actual shapes are
+    // enforced by the file structure conventions rather than a strict schema.
     if (agentMeta.response_engine.type === "retell-llm") {
       const llmResult = findConfigFile("llm")
       if (llmResult) {
         const llmConfig = llmResult.reader(llmResult.content, z.looseObject({}))
         await resolveFilePlaceholders(llmConfig, resolveFileContent)
-        llmConfig._id = agentMeta.response_engine.llm_id
-        llmConfig._version = agentMeta.response_engine.version ?? 0
-        llms.push(llmConfig as CanonicalLLM)
+        llms.push({
+          ...llmConfig,
+          _id: agentMeta.response_engine.llm_id,
+          _version: agentMeta.response_engine.version ?? 0,
+        } as CanonicalLLM)
       }
     } else if (agentMeta.response_engine.type === "conversation-flow") {
       const flowResult = findConfigFile("conversation-flow")
@@ -910,38 +1069,44 @@ async function canonicalizeFromFiles(
           z.looseObject({}),
         )
         await resolveFilePlaceholders(flowConfig, resolveFileContent)
-        flowConfig._id = agentMeta.response_engine.conversation_flow_id
-        flowConfig._version = agentMeta.response_engine.version ?? 0
-        conversationFlows.push(flowConfig as CanonicalConversationFlow)
+        conversationFlows.push({
+          ...flowConfig,
+          _id: agentMeta.response_engine.conversation_flow_id,
+          _version: agentMeta.response_engine.version ?? 0,
+        } as CanonicalConversationFlow)
       }
     }
-    // custom-llm has no separate resource file - the URL is stored in config
 
-    // Reconstruct full agent config with metadata
-    // Strip version_title if present in old config files (it's ignored)
-    delete agentConfig.version_title
-    agentConfig._id = agentMeta.id
-    agentConfig._version = agentMeta.version
+    // Build response engine for canonical agent config
+    const responseEngine =
+      agentMeta.response_engine.type === "custom-llm"
+        ? {
+            type: "custom-llm" as const,
+            llm_websocket_url:
+              typeof agentConfig.llm_websocket_url === "string"
+                ? agentConfig.llm_websocket_url
+                : "",
+          }
+        : agentMeta.response_engine
 
-    // For custom-llm, the llm_websocket_url is stored in config (writable), not .agent.json
-    if (agentMeta.response_engine.type === "custom-llm") {
-      const llmWebsocketUrl = agentConfig.llm_websocket_url as
-        | string
-        | undefined
-      delete agentConfig.llm_websocket_url
-      agentConfig.response_engine = {
-        type: "custom-llm" as const,
-        llm_websocket_url: llmWebsocketUrl ?? "",
-      }
-    } else {
-      agentConfig.response_engine = agentMeta.response_engine
+    // Strip version_title (not used) and llm_websocket_url (moved to response_engine)
+    const {
+      version_title: _vt,
+      llm_websocket_url: _url,
+      ...cleanConfig
+    } = agentConfig
+
+    const canonicalAgent = {
+      ...cleanConfig,
+      _id: agentMeta.id,
+      _version: agentMeta.version,
+      response_engine: responseEngine,
     }
 
-    // Add to appropriate agent list based on channel
     if (agentMeta.channel === "chat") {
-      chatAgents.push(agentConfig as CanonicalChatAgent)
+      chatAgents.push(canonicalAgent as CanonicalChatAgent)
     } else {
-      voiceAgents.push(agentConfig as CanonicalVoiceAgent)
+      voiceAgents.push(canonicalAgent as CanonicalVoiceAgent)
     }
   }
 
@@ -952,15 +1117,6 @@ async function canonicalizeFromFiles(
     conversationFlows,
   }
 }
-
-/**
- * SDK types are wrong, so we need to add is_published here. We'll cast API
- * responses to this type before canonicalizing.
- */
-type CorrectedConversationFlowResponse =
-  Retell.ConversationFlow.ConversationFlowResponse & {
-    is_published?: boolean
-  }
 
 // ============================================================================
 // Test Case Definitions
@@ -981,7 +1137,7 @@ export type CanonicalTestCase = Omit<
 
 /**
  * Fetches test case definitions for a specific response engine from the Retell
- * API. Since the SDK doesn't have this method, we make a direct HTTP call.
+ * API.
  */
 export async function getTestCaseDefinitions(
   responseEngine:
@@ -1006,37 +1162,21 @@ export async function getTestCaseDefinitions(
     }
   }
 
-  const response = await fetch(
-    `https://api.retellai.com/list-test-case-definitions?${params.toString()}`,
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.RETELL_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    },
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    // If no test cases exist, the API might return a 404 or error - just return empty
-    if (response.status === 404) {
-      return []
-    }
-    throw new Error(
-      `Failed to fetch test cases: ${response.status} ${errorText}`,
-    )
+  let data: unknown
+  try {
+    data = await retellFetch(`/list-test-case-definitions?${params.toString()}`)
+  } catch (err) {
+    // If no test cases exist, the API may return 404
+    if (err instanceof Error && err.message.includes("404")) return []
+    throw err
   }
 
-  const data = await response.json()
-
-  // Validate and parse the response
   const result = z.array(TestCaseDefinitionSchema).safeParse(data)
   if (!result.success) {
     console.warn(
       "Warning: Some test case fields failed validation:",
       result.error.issues,
     )
-    // Return empty array if parsing completely fails
     return []
   }
 
@@ -1136,10 +1276,7 @@ export async function getLocalTestCases(
   return testCases
 }
 
-/**
- * Updates a test case definition via the Retell API. Since the SDK doesn't have
- * this method, we make a direct HTTP call.
- */
+/** Updates a test case definition via the Retell API. */
 export async function updateTestCaseDefinition(
   testCaseId: string,
   update: {
@@ -1158,24 +1295,10 @@ export async function updateTestCaseDefinition(
     llm_model?: string
   },
 ): Promise<void> {
-  const response = await fetch(
-    `https://api.retellai.com/update-test-case-definition/${testCaseId}`,
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${process.env.RETELL_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(update),
-    },
-  )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(
-      `Failed to update test case ${testCaseId}: ${response.status} ${errorText}`,
-    )
-  }
+  await retellFetch(`/update-test-case-definition/${testCaseId}`, {
+    method: "PUT",
+    body: JSON.stringify(update),
+  })
 }
 
 /**
@@ -1206,41 +1329,19 @@ export async function fetchAndWriteTestCases({
   ]
 
   for (const agent of allAgents) {
-    const agentName = agent.agent_name ?? agent._id
-    const hash = agent._id.slice(-FILE_HASH_LENGTH)
-    const agentDirName = `${toSnakeCase(agentName)}_${hash}`
+    const agentDirName = getAgentDirName(agent)
     const agentDirPath = path.join(agentsDir, agentDirName)
 
-    // Only fetch for response engines that support test cases
-    if (
-      agent.response_engine.type !== "retell-llm" &&
-      agent.response_engine.type !== "conversation-flow"
-    ) {
-      continue
-    }
-
-    // Normalize version (convert null to undefined for API call)
-    const normalizedEngine =
-      agent.response_engine.type === "retell-llm"
-        ? {
-            type: "retell-llm" as const,
-            llm_id: agent.response_engine.llm_id,
-            version: agent.response_engine.version ?? undefined,
-          }
-        : {
-            type: "conversation-flow" as const,
-            conversation_flow_id: agent.response_engine.conversation_flow_id,
-            version: agent.response_engine.version ?? undefined,
-          }
+    const engine = normalizeResponseEngine(agent.response_engine)
+    if (!engine) continue
 
     let testCases: TestCaseDefinition[]
     try {
-      testCases = await getTestCaseDefinitions(normalizedEngine)
+      testCases = await getTestCaseDefinitions(engine)
     } catch (err) {
-      // Log warning but continue with other agents
       const message = err instanceof Error ? err.message : String(err)
       console.warn(
-        `Warning: Could not fetch test cases for ${agentName}: ${message}`,
+        `Warning: Could not fetch test cases for ${agent.agent_name ?? agent._id}: ${message}`,
       )
       continue
     }
@@ -1255,7 +1356,7 @@ export async function fetchAndWriteTestCases({
     // Write test cases to disk
     await writeTestCases(testCases, {
       agentDirPath,
-      responseEngine: normalizedEngine,
+      responseEngine: engine,
       configFormat,
     })
 
@@ -1345,11 +1446,11 @@ async function writeTestCases(
     writtenFiles.add(configFileName)
   }
 
-  // Clean up stale files in tests directory
-  const existingFiles = await fs.readdir(testsDir).catch(() => [])
+  // Clean up stale files in tests directory (best-effort, dir may not exist)
+  const existingFiles = await fs.readdir(testsDir).catch(() => [] as string[])
   for (const file of existingFiles) {
     if (!writtenFiles.has(file)) {
-      await fs.rm(path.join(testsDir, file)).catch(() => {})
+      await fs.rm(path.join(testsDir, file), { force: true })
     }
   }
 }

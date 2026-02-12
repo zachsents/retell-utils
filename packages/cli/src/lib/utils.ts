@@ -1,39 +1,16 @@
 import boxen from "boxen"
-import * as R from "remeda"
-import type { Promisable } from "type-fest"
 import YAML from "yaml"
 import z, { type ZodType } from "zod"
 import { formatWithPrettier } from "./prettier"
+
+// Re-export general utilities from core
+export { pluralize, toSnakeCase } from "@core"
 
 export const DEFAULT_AGENTS_DIR = "./agents"
 export const FILE_HASH_LENGTH = 6
 export const CONFIG_FORMATS = ["yaml", "yml", "json", "jsonc"] as const
 export type ConfigFormat = (typeof CONFIG_FORMATS)[number]
 export const DEFAULT_CONFIG_FORMAT: ConfigFormat = "yaml"
-
-export function pluralize(word: string, q: number, includeQuantity = false) {
-  let pluralWord = word
-  if (q !== 1) {
-    if (word.endsWith("y") && !/[aeiou]y$/i.test(word)) {
-      pluralWord = `${word.slice(0, -1)}ies`
-    } else if (!word.endsWith("s")) {
-      pluralWord = `${word}s`
-    }
-  }
-  const quantity = includeQuantity ? `${q} ` : ""
-  return `${quantity}${pluralWord}`
-}
-
-/** Converts a string to snake_case, stripping non-alphanumeric characters. */
-export function toSnakeCase(str: string) {
-  return str
-    .replace(/\s+/g, "_")
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[^a-z0-9_]/gi, "")
-    .toLowerCase()
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "")
-}
 
 /** Parses markdown content with optional YAML frontmatter. */
 export async function readMarkdown(content: string) {
@@ -215,47 +192,25 @@ export async function writeYaml(
   })
 }
 
+import { resolveFilePlaceholders as coreResolveFilePlaceholders } from "@core"
+
 /**
- * Recursively searches through an object/array structure and replaces file://
- * placeholders with file contents, extracting markdown frontmatter. Mutates the
- * structure in place.
+ * Resolves `file://` placeholders in an object/array, extracting markdown body
+ * (stripping frontmatter). Wraps core's `resolveFilePlaceholders` with the
+ * CLI's `readMarkdown` transform.
  */
 export async function resolveFilePlaceholders(
   value: unknown,
-  resolveFileContent: (
-    /** File path relative to the current agent directory */
-    filePath: string,
-  ) => Promisable<string>,
+  resolveFileContent: (filePath: string) => string | Promise<string>,
 ): Promise<void> {
-  const resolveValue = async (value: unknown) => {
-    const result = z
-      .string()
-      .startsWith("file://")
-      .transform((f) => f.replace("file://", ""))
-      .safeParse(value)
-    if (!result.success) return undefined
-    const content = await resolveFileContent(result.data)
-    const { body } = await readMarkdown(content)
-    return body
-  }
-
-  if (Array.isArray(value)) {
-    await Promise.all(
-      value.map(async (item, i) => {
-        const resolved = await resolveValue(item)
-        if (resolved) value[i] = resolved
-        await resolveFilePlaceholders(item, resolveFileContent)
-      }),
-    )
-  } else if (R.isPlainObject(value)) {
-    await Promise.all(
-      Object.entries(value).map(async ([key, propValue]) => {
-        const resolved = await resolveValue(propValue)
-        if (resolved) value[key] = resolved
-        await resolveFilePlaceholders(propValue, resolveFileContent)
-      }),
-    )
-  }
+  return coreResolveFilePlaceholders(
+    value,
+    resolveFileContent,
+    async (content) => {
+      const { body } = await readMarkdown(content)
+      return body
+    },
+  )
 }
 
 /**

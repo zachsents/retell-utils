@@ -7,11 +7,14 @@ import * as R from "remeda"
 import {
   type CanonicalTestCase,
   canonicalizeTestCases,
+  findAffectedAgentIds,
+  getAgentDirName,
   getLocalState,
   getLocalTestCases,
   getRemoteState,
-  getRetell,
   getTestCaseDefinitions,
+  normalizeResponseEngine,
+  retellFetch,
   updateTestCaseDefinition,
 } from "../lib/agents"
 import {
@@ -25,9 +28,7 @@ import {
   type ConfigFormat,
   DEFAULT_AGENTS_DIR,
   DEFAULT_CONFIG_FORMAT,
-  FILE_HASH_LENGTH,
   pluralize,
-  toSnakeCase,
 } from "../lib/utils"
 import { pull } from "./pull"
 
@@ -140,35 +141,24 @@ export async function deploy({
       continue
     }
 
-    const agentName = agent.agent_name ?? agent._id
-    const hash = agent._id.slice(-FILE_HASH_LENGTH)
-    const agentDirName = `${toSnakeCase(agentName)}_${hash}`
-    const agentDirPath = path.join(agentsDir, agentDirName)
+    const agentDirPath = path.join(agentsDir, getAgentDirName(agent))
 
     // Read local test cases
     const localTestCases = await getLocalTestCases(agentDirPath)
     if (localTestCases.length === 0) continue
 
     // Fetch remote test cases
-    const normalizedEngine =
-      agent.response_engine.type === "retell-llm"
-        ? {
-            type: "retell-llm" as const,
-            llm_id: agent.response_engine.llm_id,
-            version: agent.response_engine.version ?? undefined,
-          }
-        : {
-            type: "conversation-flow" as const,
-            conversation_flow_id: agent.response_engine.conversation_flow_id,
-            version: agent.response_engine.version ?? undefined,
-          }
+    const engine = normalizeResponseEngine(agent.response_engine)
+    if (!engine) continue
 
     let remoteTestCases: CanonicalTestCase[] = []
     try {
-      const rawRemote = await getTestCaseDefinitions(normalizedEngine)
+      const rawRemote = await getTestCaseDefinitions(engine)
       remoteTestCases = canonicalizeTestCases(rawRemote)
-    } catch {
-      // If we can't fetch remote, skip this agent's test cases
+    } catch (err) {
+      logger.warn(
+        `Could not fetch remote test cases: ${err instanceof Error ? err.message : String(err)}`,
+      )
       continue
     }
 
@@ -222,47 +212,7 @@ export async function deploy({
     changes.testCases.length
 
   // Collect affected agent IDs (agents with direct changes + agents whose LLMs/flows changed)
-  const affectedAgentIds = new Set<string>()
-  for (const change of changes.voiceAgents) {
-    affectedAgentIds.add(change.id)
-  }
-  for (const change of changes.chatAgents) {
-    affectedAgentIds.add(change.id)
-  }
-  const changedLlmIds = new Set(changes.llms.map((c) => c.id))
-  const changedFlowIds = new Set(changes.flows.map((c) => c.id))
-
-  // Check voice agents for affected LLMs/flows
-  for (const agent of localState.voiceAgents) {
-    if (
-      agent.response_engine.type === "retell-llm" &&
-      changedLlmIds.has(agent.response_engine.llm_id)
-    ) {
-      affectedAgentIds.add(agent._id)
-    }
-    if (
-      agent.response_engine.type === "conversation-flow" &&
-      changedFlowIds.has(agent.response_engine.conversation_flow_id)
-    ) {
-      affectedAgentIds.add(agent._id)
-    }
-  }
-
-  // Check chat agents for affected LLMs/flows
-  for (const agent of localState.chatAgents) {
-    if (
-      agent.response_engine.type === "retell-llm" &&
-      changedLlmIds.has(agent.response_engine.llm_id)
-    ) {
-      affectedAgentIds.add(agent._id)
-    }
-    if (
-      agent.response_engine.type === "conversation-flow" &&
-      changedFlowIds.has(agent.response_engine.conversation_flow_id)
-    ) {
-      affectedAgentIds.add(agent._id)
-    }
-  }
+  const affectedAgentIds = findAffectedAgentIds(changes, localState)
 
   if (totalChanges === 0) {
     logger.success("No changes to deploy")
@@ -281,7 +231,6 @@ export async function deploy({
 
   spinner = logger.createSpinner(`Deploying ${totalChanges} changes...`)
 
-  const client = getRetell()
   const updateResults = await Promise.allSettled([
     // Voice agent updates (response_engine is read-only for retell-llm/conversation-flow, but mutable for custom-llm)
     ...changes.voiceAgents.map(async (change) => {
@@ -290,7 +239,10 @@ export async function deploy({
         response_engine.type === "custom-llm"
           ? { ...baseData, response_engine }
           : baseData
-      await client.agent.update(_id, updateData)
+      await retellFetch(`/update-agent/${_id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateData),
+      })
       return { type: "voice agent" as const, id: _id, name: change.name }
     }),
     // Chat agent updates
@@ -300,19 +252,28 @@ export async function deploy({
         response_engine.type === "custom-llm"
           ? { ...baseData, response_engine }
           : baseData
-      await client.chatAgent.update(_id, updateData)
+      await retellFetch(`/update-chat-agent/${_id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateData),
+      })
       return { type: "chat agent" as const, id: _id, name: change.name }
     }),
     // LLM updates
     ...changes.llms.map(async (change) => {
       const { _id, _version, ...updateData } = change.current
-      await client.llm.update(_id, updateData)
+      await retellFetch(`/update-retell-llm/${_id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateData),
+      })
       return { type: "llm" as const, id: _id, name: change.name }
     }),
     // Flow updates
     ...changes.flows.map(async (change) => {
       const { _id, _version, ...updateData } = change.current
-      await client.conversationFlow.update(_id, updateData)
+      await retellFetch(`/update-conversation-flow/${_id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateData),
+      })
       return { type: "flow" as const, id: _id, name: change.name }
     }),
     // Test case updates

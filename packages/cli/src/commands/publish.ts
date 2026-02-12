@@ -1,7 +1,17 @@
 import { ExitPromptError } from "@inquirer/core"
 import chalk from "chalk"
 import type { Command } from "commander"
-import { getRemoteState, getRetell } from "../lib/agents"
+import {
+  PhoneNumberAgentEntrySchema,
+  PhoneNumberResponseSchema,
+  VoiceAgentResponseSchema,
+} from "@core"
+import z from "zod"
+import {
+  findAffectedAgentIds,
+  getRemoteState,
+  retellFetch,
+} from "../lib/agents"
 import { computeChanges } from "../lib/changes"
 import * as logger from "../lib/logger"
 import { resolveAgentIds } from "../lib/sync-config"
@@ -112,53 +122,8 @@ export async function publish({
     ),
   )
 
-  // Collect agent IDs that need publishing
-  const agentIdsToPublish = new Set<string>()
-
-  // Voice agents with direct changes
-  for (const change of changes.voiceAgents) {
-    agentIdsToPublish.add(change.id)
-  }
-
-  // Chat agents with direct changes
-  for (const change of changes.chatAgents) {
-    agentIdsToPublish.add(change.id)
-  }
-
-  // Voice agents whose LLMs/flows changed
-  const changedLlmIds = new Set(changes.llms.map((c) => c.id))
-  const changedFlowIds = new Set(changes.flows.map((c) => c.id))
-
-  for (const agent of draftState.voiceAgents) {
-    if (
-      agent.response_engine.type === "retell-llm" &&
-      changedLlmIds.has(agent.response_engine.llm_id)
-    ) {
-      agentIdsToPublish.add(agent._id)
-    }
-    if (
-      agent.response_engine.type === "conversation-flow" &&
-      changedFlowIds.has(agent.response_engine.conversation_flow_id)
-    ) {
-      agentIdsToPublish.add(agent._id)
-    }
-  }
-
-  // Chat agents whose LLMs/flows changed
-  for (const agent of draftState.chatAgents) {
-    if (
-      agent.response_engine.type === "retell-llm" &&
-      changedLlmIds.has(agent.response_engine.llm_id)
-    ) {
-      agentIdsToPublish.add(agent._id)
-    }
-    if (
-      agent.response_engine.type === "conversation-flow" &&
-      changedFlowIds.has(agent.response_engine.conversation_flow_id)
-    ) {
-      agentIdsToPublish.add(agent._id)
-    }
-  }
+  // Collect agent IDs that need publishing (direct changes + transitive LLM/flow changes)
+  const agentIdsToPublish = findAffectedAgentIds(changes, draftState)
 
   if (agentIdsToPublish.size === 0) {
     logger.success("All agents are already up to date")
@@ -189,15 +154,12 @@ export async function publish({
     `Publishing ${agentIdsToPublish.size} agents...`,
   )
 
-  const client = getRetell()
   const publishResults = await Promise.allSettled(
     [...agentIdsToPublish].map(async (id) => {
-      // Use appropriate API based on agent type
-      if (chatAgentIds.has(id)) {
-        await client.chatAgent.publish(id)
-      } else {
-        await client.agent.publish(id)
-      }
+      const endpoint = chatAgentIds.has(id)
+        ? `/publish-chat-agent/${id}`
+        : `/publish-agent/${id}`
+      await retellFetch(endpoint, { method: "POST" })
       return {
         id,
         name: agentNames.get(id) ?? id,
@@ -252,11 +214,16 @@ async function updatePhoneNumberVersions(
 ) {
   const spinner = logger.createSpinner("Updating phone numbers...")
 
-  const client = getRetell()
   // Get all phone numbers and published agent versions in parallel
   const [phoneNumbers, ...agentVersionLists] = await Promise.all([
-    client.phoneNumber.list(),
-    ...publishedAgentIds.map((id) => client.agent.getVersions(id)),
+    z
+      .array(PhoneNumberResponseSchema)
+      .parse(await retellFetch("/list-phone-numbers")),
+    ...publishedAgentIds.map(async (id) =>
+      z
+        .array(VoiceAgentResponseSchema)
+        .parse(await retellFetch(`/get-agent-versions/${id}`)),
+    ),
   ])
 
   // Build a map of agent ID -> latest published version
@@ -275,31 +242,43 @@ async function updatePhoneNumberVersions(
     }
   }
 
-  // Find phone numbers that need updating
+  // Build updates for phone numbers whose inbound/outbound agents were published
   const publishedAgentIdSet = new Set(publishedAgentIds)
-  const updates: Array<{
+  type AgentListUpdate = {
     phoneNumber: string
-    inboundVersion?: number
-    outboundVersion?: number
-  }> = []
+    inbound_agents?: z.infer<typeof PhoneNumberAgentEntrySchema>[]
+    outbound_agents?: z.infer<typeof PhoneNumberAgentEntrySchema>[]
+    /** Human-readable descriptions for logging. */
+    descriptions: string[]
+  }
+  const updates: AgentListUpdate[] = []
 
   for (const phone of phoneNumbers) {
-    const inboundVersion =
-      phone.inbound_agent_id && publishedAgentIdSet.has(phone.inbound_agent_id)
-        ? publishedVersions.get(phone.inbound_agent_id)
-        : undefined
+    const descriptions: string[] = []
 
-    const outboundVersion =
-      phone.outbound_agent_id &&
-      publishedAgentIdSet.has(phone.outbound_agent_id)
-        ? publishedVersions.get(phone.outbound_agent_id)
-        : undefined
+    const patchInbound = patchAgentList(
+      phone.inbound_agents,
+      publishedAgentIdSet,
+      publishedVersions,
+      agentNames,
+      "inbound",
+      descriptions,
+    )
+    const patchOutbound = patchAgentList(
+      phone.outbound_agents,
+      publishedAgentIdSet,
+      publishedVersions,
+      agentNames,
+      "outbound",
+      descriptions,
+    )
 
-    if (inboundVersion != null || outboundVersion != null) {
+    if (patchInbound || patchOutbound) {
       updates.push({
         phoneNumber: phone.phone_number,
-        inboundVersion,
-        outboundVersion,
+        ...(patchInbound && { inbound_agents: patchInbound }),
+        ...(patchOutbound && { outbound_agents: patchOutbound }),
+        descriptions,
       })
     }
   }
@@ -311,15 +290,12 @@ async function updatePhoneNumberVersions(
 
   // Update all phone numbers in parallel
   const updateResults = await Promise.allSettled(
-    updates.map(async ({ phoneNumber, inboundVersion, outboundVersion }) => {
-      await client.phoneNumber.update(phoneNumber, {
-        ...(inboundVersion != null && {
-          inbound_agent_version: inboundVersion,
-        }),
-        ...(outboundVersion != null && {
-          outbound_agent_version: outboundVersion,
-        }),
-      })
+    updates.map(async (update) => {
+      const { phoneNumber, descriptions: _, ...body } = update
+      await retellFetch(
+        `/update-phone-number/${encodeURIComponent(phoneNumber)}`,
+        { method: "PATCH", body: JSON.stringify(body) },
+      )
       return phoneNumber
     }),
   )
@@ -329,27 +305,10 @@ async function updatePhoneNumberVersions(
   let updatedCount = 0
   for (const result of updateResults) {
     if (result.status === "fulfilled") {
-      const phone = updates.find((u) => u.phoneNumber === result.value)
-      const agentInfo: string[] = []
-      if (phone?.inboundVersion != null) {
-        const inboundPhone = phoneNumbers.find(
-          (p) => p.phone_number === result.value,
-        )
-        const agentId = inboundPhone?.inbound_agent_id
-        const name = agentId ? (agentNames.get(agentId) ?? agentId) : "unknown"
-        agentInfo.push(`inbound: ${name} v${phone.inboundVersion}`)
-      }
-      if (phone?.outboundVersion != null) {
-        const outboundPhone = phoneNumbers.find(
-          (p) => p.phone_number === result.value,
-        )
-        const agentId = outboundPhone?.outbound_agent_id
-        const name = agentId ? (agentNames.get(agentId) ?? agentId) : "unknown"
-        agentInfo.push(`outbound: ${name} v${phone.outboundVersion}`)
-      }
+      const update = updates.find((u) => u.phoneNumber === result.value)
       logger.log(
         chalk.green(
-          `Updated ${chalk.bold(result.value)} (${agentInfo.join(", ")})`,
+          `Updated ${chalk.bold(result.value)} (${update?.descriptions.join(", ")})`,
         ),
       )
       updatedCount++
@@ -359,4 +318,34 @@ async function updatePhoneNumberVersions(
   }
 
   logger.success(`Updated ${pluralize("phone number", updatedCount, true)}`)
+}
+
+/**
+ * Returns a patched copy of an agent list with updated versions for published
+ * agents, or `undefined` if no entries need updating. Appends human-readable
+ * descriptions to `out` for logging.
+ */
+function patchAgentList(
+  agents: z.infer<typeof PhoneNumberAgentEntrySchema>[] | null | undefined,
+  publishedIds: Set<string>,
+  publishedVersions: Map<string, number>,
+  agentNames: Map<string, string>,
+  direction: string,
+  out: string[],
+) {
+  if (!agents?.length) return undefined
+
+  let changed = false
+  const patched = agents.map((entry) => {
+    const version = publishedIds.has(entry.agent_id)
+      ? publishedVersions.get(entry.agent_id)
+      : undefined
+    if (version == null) return entry
+    changed = true
+    const name = agentNames.get(entry.agent_id) ?? entry.agent_id
+    out.push(`${direction}: ${name} v${version}`)
+    return { ...entry, agent_version: version }
+  })
+
+  return changed ? patched : undefined
 }

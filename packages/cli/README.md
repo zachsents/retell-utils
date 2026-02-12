@@ -53,10 +53,10 @@ retell publish -n            # dry run
 
 ## Options
 
-| Flag | Description |
-| --- | --- |
-| `-w, --agents-dir <dir>` | Directory for agent files (default: `agents`) |
-| `-f, --config-format <format>` | Config file format (`json`, `jsonc`, `yaml`) |
+| Flag                           | Description                                   |
+| ------------------------------ | --------------------------------------------- |
+| `-w, --agents-dir <dir>`       | Directory for agent files (default: `agents`) |
+| `-f, --config-format <format>` | Config file format (`json`, `jsonc`, `yaml`)  |
 
 ## License
 

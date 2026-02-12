@@ -44,6 +44,12 @@ export {
 // Phone number validation
 export { E164PhoneSchema, e164OrNullSchema } from "./phone"
 
+// Phone number API response
+export {
+  PhoneNumberAgentEntrySchema,
+  PhoneNumberResponseSchema,
+} from "./phone-number"
+
 // Analysis
 export { createCallAnalysisSchema, createChatAnalysisSchema } from "./analysis"
 
@@ -92,3 +98,6 @@ export {
 
 // Pagination utility
 export { retellPagination } from "./pagination"
+
+// General utilities
+export { pluralize, resolveFilePlaceholders, toSnakeCase } from "./utils"

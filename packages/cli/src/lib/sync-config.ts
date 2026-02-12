@@ -1,7 +1,11 @@
 import { checkbox, confirm } from "@inquirer/prompts"
-import { retellPagination } from "@core"
+import {
+  ChatAgentResponseSchema,
+  retellPagination,
+  VoiceAgentResponseSchema,
+} from "@core"
 import z from "zod"
-import { getRetell } from "./agents"
+import { retellFetch } from "./agents"
 import * as logger from "./logger"
 import { writeJson } from "./utils"
 
@@ -39,11 +43,37 @@ export async function writeSyncConfig(config: SyncConfig): Promise<void> {
  * the account. Includes both voice and chat agents.
  */
 export async function selectAgentsInteractive(): Promise<string[]> {
-  const client = getRetell()
   // Fetch both voice and chat agents in parallel
+  const paginationParams = (opts: {
+    limit?: number
+    pagination_key?: string
+    pagination_key_version?: number
+  }) => {
+    const p = new URLSearchParams()
+    if (opts.limit) p.set("limit", String(opts.limit))
+    if (opts.pagination_key) p.set("pagination_key", opts.pagination_key)
+    if (opts.pagination_key_version != null)
+      p.set("pagination_key_version", String(opts.pagination_key_version))
+    return p.toString()
+  }
+
   const [voiceAgents, chatAgents] = await Promise.all([
-    retellPagination((opts) => client.agent.list(opts), "agent_id"),
-    retellPagination((opts) => client.chatAgent.list(opts), "agent_id"),
+    retellPagination(
+      async (opts) =>
+        z
+          .array(VoiceAgentResponseSchema)
+          .parse(await retellFetch(`/list-agents?${paginationParams(opts)}`)),
+      "agent_id",
+    ),
+    retellPagination(
+      async (opts) =>
+        z
+          .array(ChatAgentResponseSchema)
+          .parse(
+            await retellFetch(`/list-chat-agents?${paginationParams(opts)}`),
+          ),
+      "agent_id",
+    ),
   ])
 
   // Dedupe voice agents by agent_id (keep latest version)
