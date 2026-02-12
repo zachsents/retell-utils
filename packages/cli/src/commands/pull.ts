@@ -10,16 +10,10 @@ import {
 } from "../lib/agents"
 import { createSpinner } from "../lib/logger"
 import { resolveAgentIds } from "../lib/sync-config"
-import {
-  type ConfigFormat,
-  DEFAULT_AGENTS_DIR,
-  DEFAULT_CONFIG_FORMAT,
-  pluralize,
-} from "../lib/utils"
+import { DEFAULT_AGENTS_DIR, pluralize } from "../lib/utils"
 
 type GlobalOpts = {
   agentsDir?: string
-  configFormat?: ConfigFormat
 }
 
 export async function pullCommand(
@@ -72,7 +66,6 @@ export async function pullCommand(
 
     await pull({
       agentsDir: globalOpts.agentsDir,
-      configFormat: globalOpts.configFormat,
       agentIds,
       yes: opts.yes,
       version,
@@ -93,14 +86,12 @@ export async function pullCommand(
  */
 export async function pull({
   agentsDir = DEFAULT_AGENTS_DIR,
-  configFormat = DEFAULT_CONFIG_FORMAT,
   agentIds = null,
   yes = false,
   version,
   tests = true,
 }: {
   agentsDir?: string
-  configFormat?: ConfigFormat
   /** If null, pulls all agents. If array, pulls only those agent IDs. */
   agentIds?: string[] | null
   yes?: boolean
@@ -146,7 +137,7 @@ export async function pull({
   )
 
   const writeSpinner = createSpinner("Writing files...")
-  await writeState(remoteState, { agentsDir, configFormat, agentIds })
+  await writeState(remoteState, { agentsDir, agentIds })
   writeSpinner.stop(chalk.green("Done"))
 
   // Fetch and write test cases if requested
@@ -155,7 +146,6 @@ export async function pull({
     const testResults = await fetchAndWriteTestCases({
       state: remoteState,
       agentsDir,
-      configFormat,
     })
     const totalTests = testResults.reduce((sum, r) => sum + r.testCount, 0)
     const agentsWithTests = testResults.filter((r) => r.testCount > 0).length

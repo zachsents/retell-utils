@@ -17,10 +17,8 @@ import { chatAgentFieldDocs } from "./chat-agent-field-docs"
 import { flowFieldDocs } from "./flow-field-docs"
 import { llmFieldDocs } from "./llm-field-docs"
 import {
-  type ConfigFormat,
   createFlowVisualization,
   DEFAULT_AGENTS_DIR,
-  DEFAULT_CONFIG_FORMAT,
   FILE_HASH_LENGTH,
   readJson,
   readJsonc,
@@ -28,7 +26,6 @@ import {
   resolveFilePlaceholders,
   toSnakeCase,
   writeJson,
-  writeJsonc,
   writeMarkdown,
   writeYaml,
 } from "./utils"
@@ -641,16 +638,14 @@ export async function writeState(
   state: CanonicalState,
   {
     agentsDir = DEFAULT_AGENTS_DIR,
-    configFormat = DEFAULT_CONFIG_FORMAT,
     agentIds = null,
   }: {
     agentsDir?: string
-    configFormat?: ConfigFormat
     /** If provided, only cleans up directories for these agent IDs. */
     agentIds?: string[] | null
   } = {},
 ) {
-  const files = await serializeState(state, { agentsDir, configFormat })
+  const files = await serializeState(state, { agentsDir })
 
   // Track all files we write (relative to agentsDir)
   const writtenFiles = new Set<string>()
@@ -738,14 +733,8 @@ async function listFilesRecursive(dir: string): Promise<string[]> {
  */
 export async function serializeState(
   state: CanonicalState,
-  {
-    agentsDir = DEFAULT_AGENTS_DIR,
-    configFormat = DEFAULT_CONFIG_FORMAT,
-  }: { agentsDir?: string; configFormat?: ConfigFormat } = {},
+  { agentsDir = DEFAULT_AGENTS_DIR }: { agentsDir?: string } = {},
 ): Promise<Record<string, string>> {
-  const isYaml = configFormat === "yaml" || configFormat === "yml"
-  const isJsonc = configFormat === "jsonc"
-  const configExt = configFormat
   const files: Record<string, string> = {}
 
   const llmMap = new Map(state.llms.map((llm) => [llm._id, llm]))
@@ -771,11 +760,10 @@ export async function serializeState(
         }
 
         // llm config
-        files[path.join(agentDirPath, `llm.${configExt}`)] = isYaml
-          ? await writeYaml(llmConfig, { comments: llmFieldDocs })
-          : isJsonc
-            ? await writeJsonc(llmConfig, { comments: llmFieldDocs })
-            : await writeJson(llmConfig)
+        files[path.join(agentDirPath, "llm.yaml")] = await writeYaml(
+          llmConfig,
+          { comments: llmFieldDocs },
+        )
       }
     } else if (agent.response_engine.type === "conversation-flow") {
       const flow = flowMap.get(agent.response_engine.conversation_flow_id)
@@ -903,12 +891,8 @@ export async function serializeState(
         }
 
         // conversation-flow config
-        files[path.join(agentDirPath, `conversation-flow.${configExt}`)] =
-          isYaml
-            ? await writeYaml(flowConfig, { comments: flowFieldDocs })
-            : isJsonc
-              ? await writeJsonc(flowConfig, { comments: flowFieldDocs })
-              : await writeJson(flowConfig)
+        files[path.join(agentDirPath, "conversation-flow.yaml")] =
+          await writeYaml(flowConfig, { comments: flowFieldDocs })
       }
     }
   }
@@ -950,12 +934,10 @@ export async function serializeState(
 
     await serializeResponseEngine(agent, agentDirPath)
 
-    // config file (yaml, jsonc, or json based on configFormat)
-    files[path.join(agentDirPath, `config.${configExt}`)] = isYaml
-      ? await writeYaml(configToWrite, { comments: agentFieldDocs })
-      : isJsonc
-        ? await writeJsonc(configToWrite, { comments: agentFieldDocs })
-        : await writeJson(configToWrite)
+    files[path.join(agentDirPath, "config.yaml")] = await writeYaml(
+      configToWrite,
+      { comments: agentFieldDocs },
+    )
   }
 
   // Serialize chat agents
@@ -994,12 +976,10 @@ export async function serializeState(
 
     await serializeResponseEngine(agent, agentDirPath)
 
-    // config file (yaml, jsonc, or json based on configFormat)
-    files[path.join(agentDirPath, `config.${configExt}`)] = isYaml
-      ? await writeYaml(chatConfigToWrite, { comments: chatAgentFieldDocs })
-      : isJsonc
-        ? await writeJsonc(chatConfigToWrite, { comments: chatAgentFieldDocs })
-        : await writeJson(chatConfigToWrite)
+    files[path.join(agentDirPath, "config.yaml")] = await writeYaml(
+      chatConfigToWrite,
+      { comments: chatAgentFieldDocs },
+    )
   }
 
   return files
@@ -1385,11 +1365,9 @@ export async function updateTestCaseDefinition(
 export async function fetchAndWriteTestCases({
   state,
   agentsDir = DEFAULT_AGENTS_DIR,
-  configFormat = DEFAULT_CONFIG_FORMAT,
 }: {
   state: CanonicalState
   agentsDir?: string
-  configFormat?: ConfigFormat
 }): Promise<{ agentDir: string; testCount: number }[]> {
   const results: { agentDir: string; testCount: number }[] = []
 
@@ -1434,7 +1412,6 @@ export async function fetchAndWriteTestCases({
     await writeTestCases(testCases, {
       agentDirPath,
       responseEngine: engine,
-      configFormat,
     })
 
     results.push({ agentDir: agentDirName, testCount: testCases.length })
@@ -1453,7 +1430,6 @@ async function writeTestCases(
   {
     agentDirPath,
     responseEngine,
-    configFormat = DEFAULT_CONFIG_FORMAT,
   }: {
     agentDirPath: string
     responseEngine:
@@ -1463,15 +1439,10 @@ async function writeTestCases(
           conversation_flow_id: string
           version?: number
         }
-    configFormat?: ConfigFormat
   },
 ): Promise<void> {
   const testsDir = path.join(agentDirPath, "tests")
   await fs.mkdir(testsDir, { recursive: true })
-
-  const isYaml = configFormat === "yaml" || configFormat === "yml"
-  const isJsonc = configFormat === "jsonc"
-  const configExt = configFormat
 
   // Write .tests.json metadata (immutable info)
   const metadata = {
@@ -1512,12 +1483,10 @@ async function writeTestCases(
     }
 
     // Write test case config file
-    const configFileName = `${testCaseName}.${configExt}`
-    const configContent = isYaml
-      ? await writeYaml(configWithFileRef, { comments: testCaseFieldDocs })
-      : isJsonc
-        ? await writeJsonc(configWithFileRef, { comments: testCaseFieldDocs })
-        : await writeJson(configWithFileRef)
+    const configFileName = `${testCaseName}.yaml`
+    const configContent = await writeYaml(configWithFileRef, {
+      comments: testCaseFieldDocs,
+    })
 
     await Bun.write(path.join(testsDir, configFileName), configContent)
     writtenFiles.add(configFileName)

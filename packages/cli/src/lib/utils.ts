@@ -8,9 +8,6 @@ export { pluralize, toSnakeCase } from "@core"
 
 export const DEFAULT_AGENTS_DIR = "./agents"
 export const FILE_HASH_LENGTH = 6
-export const CONFIG_FORMATS = ["yaml", "yml", "json", "jsonc"] as const
-export type ConfigFormat = (typeof CONFIG_FORMATS)[number]
-export const DEFAULT_CONFIG_FORMAT: ConfigFormat = "yaml"
 
 /** Parses markdown content with optional YAML frontmatter. */
 export async function readMarkdown(content: string) {
@@ -122,50 +119,6 @@ export function readJsonc(content: string, schema?: ZodType) {
 
 export async function writeJson(obj: unknown) {
   return formatWithPrettier(JSON.stringify(obj), { parser: "json" })
-}
-
-/**
- * Writes an object as JSONC (JSON with Comments). Adds documentation comments
- * before each top-level key.
- */
-export async function writeJsonc(
-  obj: unknown,
-  { comments = {} }: { comments?: Record<string, string> } = {},
-) {
-  // First format as regular JSON to get proper structure
-  const json = await formatWithPrettier(JSON.stringify(obj), {
-    parser: "json",
-  })
-
-  // If no comments, just return JSON (but with .jsonc extension it's still valid)
-  if (Object.keys(comments).length === 0) {
-    return json
-  }
-
-  // Add comments before top-level keys
-  const lines = json.split("\n")
-  const result: string[] = []
-  let isFirstKey = true
-
-  for (const line of lines) {
-    // Match top-level key (2-space indent, starts with ")
-    const keyMatch = line.match(/^ {2}"([^"]+)":\s*/)
-    if (keyMatch?.[1]) {
-      const key = keyMatch[1]
-      const comment = comments[key]
-      if (comment) {
-        // Add blank line before comment (except first key)
-        if (!isFirstKey) {
-          result.push("")
-        }
-        result.push(`  // ${comment}`)
-      }
-      isFirstKey = false
-    }
-    result.push(line)
-  }
-
-  return result.join("\n")
 }
 
 /** Parses a YAML string, optionally validating against a Zod schema. */

@@ -4,11 +4,7 @@ import { Command } from "commander"
 import { deployCommand } from "./commands/deploy"
 import { publishCommand } from "./commands/publish"
 import { pullCommand } from "./commands/pull"
-import {
-  CONFIG_FORMATS,
-  DEFAULT_AGENTS_DIR,
-  DEFAULT_CONFIG_FORMAT,
-} from "./lib/utils.js"
+import { DEFAULT_AGENTS_DIR } from "./lib/utils.js"
 
 const program = new Command()
 
@@ -19,11 +15,6 @@ program
     "-w, --agents-dir <dir>",
     "Directory for agent files",
     DEFAULT_AGENTS_DIR,
-  )
-  .option(
-    "-f, --config-format <format>",
-    `Config file format (${CONFIG_FORMATS.join(", ")})`,
-    DEFAULT_CONFIG_FORMAT,
   )
 
 program

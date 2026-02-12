@@ -1,6 +1,6 @@
 {
   "name": "retell-sync-cli",
-  "version": "3.11.0",
+  "version": "3.12.0",
   "description": "CLI tool for syncing Retell AI agents between local filesystem and API",
   "keywords": [
     "agents",

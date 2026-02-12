@@ -15,17 +15,11 @@ import {
 import { computeChanges } from "../lib/changes"
 import * as logger from "../lib/logger"
 import { resolveAgentIds } from "../lib/sync-config"
-import {
-  type ConfigFormat,
-  DEFAULT_AGENTS_DIR,
-  DEFAULT_CONFIG_FORMAT,
-  pluralize,
-} from "../lib/utils"
+import { DEFAULT_AGENTS_DIR, pluralize } from "../lib/utils"
 import { pull } from "./pull"
 
 type GlobalOpts = {
   agentsDir?: string
-  configFormat?: ConfigFormat
 }
 
 export async function publishCommand(
@@ -51,7 +45,6 @@ export async function publishCommand(
 
     const publishedIds = await publish({
       agentsDir: globalOpts.agentsDir,
-      configFormat: globalOpts.configFormat,
       agentIds,
       dryRun: opts.dryRun,
     })
@@ -76,12 +69,10 @@ export async function publishCommand(
  */
 export async function publish({
   agentsDir = DEFAULT_AGENTS_DIR,
-  configFormat = DEFAULT_CONFIG_FORMAT,
   agentIds = null,
   dryRun = false,
 }: {
   agentsDir?: string
-  configFormat?: ConfigFormat
   agentIds?: string[] | null
   dryRun?: boolean
 } = {}): Promise<string[]> {
@@ -198,7 +189,7 @@ export async function publish({
   // Re-pull to get the updated state from Retell
   if (!logger.isQuiet()) {
     logger.bold("Syncing latest state...")
-    await pull({ agentsDir, configFormat, agentIds })
+    await pull({ agentsDir, agentIds })
   }
 
   return publishedAgentIds
