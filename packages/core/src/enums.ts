@@ -71,3 +71,152 @@ export const DataStorageSettingSchema = z.enum([
   "everything_except_pii",
   "basic_attributes_only",
 ])
+
+/** LLM model choices for text generation and post-call/chat analysis. */
+export const LlmModelSchema = z.enum([
+  "gpt-4.1",
+  "gpt-4.1-mini",
+  "gpt-4.1-nano",
+  "gpt-5",
+  "gpt-5.1",
+  "gpt-5.2",
+  "gpt-5-mini",
+  "gpt-5-nano",
+  "claude-4.5-sonnet",
+  "claude-4.5-haiku",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-3.0-flash",
+])
+
+/** Speech-to-speech model options. */
+export const S2sModelSchema = z.enum([
+  "gpt-4o-realtime",
+  "gpt-4o-mini-realtime",
+  "gpt-realtime",
+  "gpt-realtime-mini",
+])
+
+/** TTS voice model options. */
+export const VoiceModelSchema = z.enum([
+  "eleven_turbo_v2",
+  "eleven_flash_v2",
+  "eleven_turbo_v2_5",
+  "eleven_flash_v2_5",
+  "eleven_multilingual_v2",
+  "sonic-2",
+  "sonic-3",
+  "sonic-3-latest",
+  "sonic-turbo",
+  "tts-1",
+  "gpt-4o-mini-tts",
+  "speech-02-turbo",
+  "speech-2.8-turbo",
+])
+
+/** Voice emotion options (Cartesia and Minimax providers). */
+export const VoiceEmotionSchema = z.enum([
+  "calm",
+  "sympathetic",
+  "happy",
+  "sad",
+  "angry",
+  "fearful",
+  "surprised",
+])
+
+/** Ambient background sound options. */
+export const AmbientSoundSchema = z.enum([
+  "coffee-shop",
+  "convention-hall",
+  "summer-outdoor",
+  "mountain-outdoor",
+  "static-noise",
+  "call-center",
+])
+
+/**
+ * Agent language / dialect options. Superset used by both voice and chat
+ * agents.
+ */
+export const AgentLanguageSchema = z.enum([
+  "en-US",
+  "en-IN",
+  "en-GB",
+  "en-AU",
+  "en-NZ",
+  "de-DE",
+  "es-ES",
+  "es-419",
+  "hi-IN",
+  "fr-FR",
+  "fr-CA",
+  "ja-JP",
+  "pt-PT",
+  "pt-BR",
+  "zh-CN",
+  "ru-RU",
+  "it-IT",
+  "ko-KR",
+  "nl-NL",
+  "nl-BE",
+  "pl-PL",
+  "tr-TR",
+  "vi-VN",
+  "ro-RO",
+  "bg-BG",
+  "ca-ES",
+  "th-TH",
+  "da-DK",
+  "fi-FI",
+  "el-GR",
+  "hu-HU",
+  "id-ID",
+  "no-NO",
+  "sk-SK",
+  "sv-SE",
+  "lt-LT",
+  "lv-LV",
+  "cs-CZ",
+  "ms-MY",
+  "af-ZA",
+  "ar-SA",
+  "az-AZ",
+  "bs-BA",
+  "cy-GB",
+  "fa-IR",
+  "fil-PH",
+  "gl-ES",
+  "he-IL",
+  "hr-HR",
+  "hy-AM",
+  "is-IS",
+  "kk-KZ",
+  "kn-IN",
+  "mk-MK",
+  "mr-IN",
+  "ne-NP",
+  "sl-SI",
+  "sr-RS",
+  "sw-KE",
+  "ta-IN",
+  "ur-IN",
+  "yue-CN",
+  "uk-UA",
+  "multi",
+])
+
+/** Webhook event types for voice agents. */
+export const WebhookEventSchema = z.enum([
+  "call_started",
+  "call_ended",
+  "call_analyzed",
+  "transcript_updated",
+  "transfer_started",
+  "transfer_bridged",
+  "transfer_cancelled",
+  "transfer_ended",
+])
+
+/** Who starts the conversation (used by LLM and conversation flow). */
+export const StartSpeakerSchema = z.enum(["user", "agent"])

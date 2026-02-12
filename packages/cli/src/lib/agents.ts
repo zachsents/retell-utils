@@ -489,7 +489,6 @@ export function canonicalizeFromApi({
       ({
         agent_id: _id,
         version,
-        version_title: _versionTitle,
         last_modification_timestamp: _lmt,
         is_published: _pub,
         ...rest
@@ -499,7 +498,6 @@ export function canonicalizeFromApi({
       ({
         agent_id: _id,
         version,
-        version_title: _versionTitle,
         last_modification_timestamp: _lmt,
         is_published: _pub,
         ...rest

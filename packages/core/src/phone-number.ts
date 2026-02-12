@@ -10,7 +10,9 @@ export const PhoneNumberAgentEntrySchema = z.object({
 /** Zod schema for a phone number response from the Retell API. */
 export const PhoneNumberResponseSchema = z.object({
   phone_number: z.string(),
-  phone_number_type: z.enum(["retell-twilio", "retell-telnyx", "custom"]).optional(),
+  phone_number_type: z
+    .enum(["retell-twilio", "retell-telnyx", "custom"])
+    .optional(),
   nickname: z.string().nullable().optional(),
   last_modification_timestamp: z.number(),
   inbound_agents: z.array(PhoneNumberAgentEntrySchema).nullable().optional(),

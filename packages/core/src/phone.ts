@@ -1,10 +1,13 @@
 import { z } from "zod"
 import { parsePhoneNumberFromString } from "libphonenumber-js"
 
-/** Validates an international E.164 phone number (`+` followed by 1–15 digits). */
+/**
+ * Validates and normalizes a phone number to E.164 format (`+` followed by 1–15
+ * digits).
+ */
 export const e164PhoneSchema = z
   .string()
-  .transform((v) => parsePhoneNumberFromString(v, "US")?.formatInternational())
+  .transform((v) => parsePhoneNumberFromString(v, "US")?.format("E.164"))
   .pipe(z.string().regex(/^\+[1-9]\d{1,14}$/))
 
 /**

@@ -1,11 +1,19 @@
 // Enums
 export {
+  AgentLanguageSchema,
+  AmbientSoundSchema,
   CallStatusSchema,
   ChatStatusSchema,
   ChatTypeSchema,
   DataStorageSettingSchema,
   DisconnectionReasonSchema,
+  LlmModelSchema,
+  S2sModelSchema,
+  StartSpeakerSchema,
   UserSentimentSchema,
+  VoiceEmotionSchema,
+  VoiceModelSchema,
+  WebhookEventSchema,
 } from "./enums"
 
 // Latency
@@ -75,6 +83,12 @@ export { WebhookSchemas, createWebhookSchemas } from "./webhook"
 // Agent config schemas
 export {
   ChatAgentResponseSchema,
+  GuardrailConfigSchema,
+  KbConfigSchema,
+  McpConfigSchema,
+  PiiConfigSchema,
+  PostAnalysisFieldSchema,
+  PronunciationEntrySchema,
   ResponseEngineConversationFlowSchema,
   ResponseEngineCustomLlmSchema,
   ResponseEngineRetellLlmSchema,
@@ -83,10 +97,21 @@ export {
 } from "./agent"
 
 // LLM config schemas
-export { LlmResponseSchema } from "./llm"
+export {
+  LlmResponseSchema,
+  LlmStateEdgeSchema,
+  LlmStateSchema,
+  LlmToolSchema,
+} from "./llm"
 
 // Conversation flow config schemas
-export { ConversationFlowResponseSchema } from "./flow"
+export {
+  ConversationFlowResponseSchema,
+  FlowComponentSchema,
+  FlowEdgeSchema,
+  FlowNodeSchema,
+  FlowTransitionConditionSchema,
+} from "./flow"
 
 // Test case schemas
 export {
