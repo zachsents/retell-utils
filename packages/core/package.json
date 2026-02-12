@@ -1,6 +1,6 @@
 {
   "name": "retell-utils",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Type-safe Zod schemas for Retell AI API resources with lifecycle-aware discriminated unions and generic customization",
   "type": "module",
   "zshy": {
@@ -44,10 +44,10 @@
     "type-safety"
   ],
   "module": "./dist/index.js",
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   }

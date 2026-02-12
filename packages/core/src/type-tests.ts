@@ -38,7 +38,7 @@ function assertDefaultCallTypes() {
   const _callId: string = base.call_id
   // agent_id is optional (testing scenarios)
   const _agentId: string | undefined = base.agent_id
-  const _version: number = base.agent_version
+  const _version: number | undefined = base.agent_version
   const _status:
     | "registered"
     | "not_connected"

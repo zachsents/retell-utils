@@ -51,10 +51,10 @@ export const ToolCallResultSchema = z.object({
 /** Node transition entry in the transcript (conversation flow agents). */
 export const NodeTransitionSchema = z.object({
   role: z.literal("node_transition"),
-  former_node_id: z.string(),
-  former_node_name: z.string(),
-  new_node_id: z.string(),
-  new_node_name: z.string(),
+  former_node_id: z.string().optional(),
+  former_node_name: z.string().optional(),
+  new_node_id: z.string().optional(),
+  new_node_name: z.string().optional(),
   /** Timestamp in seconds when the transition occurred. Observed in practice. */
   time_sec: z.number().optional(),
   /** Whether this was triggered by a global node. Observed in practice. */
