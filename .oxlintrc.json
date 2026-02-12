@@ -9,5 +9,8 @@
     "node",
     "promise"
   ],
+  "rules": {
+    "typescript/no-inferrable-types": "error"
+  },
   "ignorePatterns": ["node_modules", "dist"]
 }
