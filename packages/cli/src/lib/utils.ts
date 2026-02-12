@@ -75,48 +75,6 @@ export function readJson(content: string, schema?: ZodType) {
   return parsed
 }
 
-/** Strips single-line // comments from JSONC content. */
-function stripJsoncComments(content: string): string {
-  return content
-    .split("\n")
-    .map((line) => {
-      // Find // that's not inside a string
-      let inString = false
-      let escaped = false
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i]
-        if (escaped) {
-          escaped = false
-          continue
-        }
-        if (char === "\\") {
-          escaped = true
-          continue
-        }
-        if (char === '"') {
-          inString = !inString
-          continue
-        }
-        if (!inString && char === "/" && line[i + 1] === "/") {
-          return line.slice(0, i).trimEnd()
-        }
-      }
-      return line
-    })
-    .join("\n")
-}
-
-/** Parses a JSONC string, optionally validating against a Zod schema. */
-export function readJsonc(content: string): unknown
-export function readJsonc<T extends ZodType>(
-  content: string,
-  schema: T,
-): z.infer<T>
-export function readJsonc(content: string, schema?: ZodType) {
-  const stripped = stripJsoncComments(content)
-  return readJson(stripped, schema as ZodType)
-}
-
 export async function writeJson(obj: unknown) {
   return formatWithPrettier(JSON.stringify(obj), { parser: "json" })
 }

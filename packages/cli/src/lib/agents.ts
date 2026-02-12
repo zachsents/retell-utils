@@ -21,7 +21,6 @@ import {
   DEFAULT_AGENTS_DIR,
   FILE_HASH_LENGTH,
   readJson,
-  readJsonc,
   readYaml,
   resolveFilePlaceholders,
   toSnakeCase,
@@ -1037,26 +1036,10 @@ export async function canonicalizeFromFiles(
       }),
     )
 
-    // Helper to find and read config files in any supported format
-    const findConfigFile = (baseName: string) => {
-      for (const ext of ["yaml", "yml", "jsonc", "json"] as const) {
-        const content = fileMap[`${agentDir}/${baseName}.${ext}`]
-        if (content) {
-          const reader =
-            ext === "jsonc" ? readJsonc : ext === "json" ? readJson : readYaml
-          return { content, reader }
-        }
-      }
-      return null
-    }
-
     // Parse agent config file
-    const configResult = findConfigFile("config")
-    if (!configResult) continue
-    const agentConfig = configResult.reader(
-      configResult.content,
-      z.looseObject({}),
-    )
+    const configContent = fileMap[`${agentDir}/config.yaml`]
+    if (!configContent) continue
+    const agentConfig = readYaml(configContent, z.looseObject({}))
 
     // Create resolver function for file placeholders
     const resolveFileContent = (filePath: string) => {
@@ -1078,9 +1061,9 @@ export async function canonicalizeFromFiles(
     // z.looseObject({}) for forward compatibility -- the actual shapes are
     // enforced by the file structure conventions rather than a strict schema.
     if (agentMeta.response_engine.type === "retell-llm") {
-      const llmResult = findConfigFile("llm")
-      if (llmResult) {
-        const llmConfig = llmResult.reader(llmResult.content, z.looseObject({}))
+      const llmContent = fileMap[`${agentDir}/llm.yaml`]
+      if (llmContent) {
+        const llmConfig = readYaml(llmContent, z.looseObject({}))
         await resolveFilePlaceholders(llmConfig, resolveFileContent)
         llms.push({
           ...llmConfig,
@@ -1089,12 +1072,9 @@ export async function canonicalizeFromFiles(
         } as CanonicalLLM)
       }
     } else if (agentMeta.response_engine.type === "conversation-flow") {
-      const flowResult = findConfigFile("conversation-flow")
-      if (flowResult) {
-        const flowConfig = flowResult.reader(
-          flowResult.content,
-          z.looseObject({}),
-        )
+      const flowContent = fileMap[`${agentDir}/conversation-flow.yaml`]
+      if (flowContent) {
+        const flowConfig = readYaml(flowContent, z.looseObject({}))
         await resolveFilePlaceholders(flowConfig, resolveFileContent)
 
         // Merge display positions from .positions.json back into the flow
@@ -1290,22 +1270,9 @@ export async function getLocalTestCases(
   for (const testCaseMeta of metadata.test_cases) {
     const testCaseName = toSnakeCase(testCaseMeta.name)
 
-    // Find config file (yaml, yml, jsonc, or json)
-    let configContent: string | null = null
-    let reader: typeof readYaml | typeof readJson | typeof readJsonc = readYaml
-
-    for (const ext of ["yaml", "yml", "jsonc", "json"] as const) {
-      const configPath = path.join(testsDir, `${testCaseName}.${ext}`)
-      const file = Bun.file(configPath)
-      if (await file.exists()) {
-        configContent = await file.text()
-        reader =
-          ext === "jsonc" ? readJsonc : ext === "json" ? readJson : readYaml
-        break
-      }
-    }
-
-    if (!configContent) {
+    const configPath = path.join(testsDir, `${testCaseName}.yaml`)
+    const configFile = Bun.file(configPath)
+    if (!(await configFile.exists())) {
       console.warn(
         `Warning: Could not find config file for test case ${testCaseMeta.name}`,
       )
@@ -1313,7 +1280,7 @@ export async function getLocalTestCases(
     }
 
     // Parse config
-    const config = reader(configContent, z.looseObject({}))
+    const config = readYaml(await configFile.text(), z.looseObject({}))
 
     // Resolve file placeholders (user_prompt)
     const resolveFileContent = async (filePath: string): Promise<string> => {
