@@ -7,7 +7,7 @@ import {
   DisconnectionReasonSchema,
 } from "./enums"
 import { CallLatencySchema } from "./latency"
-import { E164PhoneSchema, e164OrNullSchema } from "./phone"
+import { e164PhoneSchema, e164OrNullSchema } from "./phone"
 import { TimestampedUtteranceSchema, TranscriptEntrySchema } from "./transcript"
 
 // ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ export const callSchemaDefaults = {
 const PhoneCallSchema = z.object({
   call_type: z.literal("phone_call"),
   from_number: e164OrNullSchema,
-  to_number: E164PhoneSchema,
+  to_number: e164PhoneSchema,
   direction: z.enum(["inbound", "outbound"]),
   telephony_identifier: z
     .object({ twilio_call_sid: z.string().optional() })

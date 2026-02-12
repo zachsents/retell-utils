@@ -42,7 +42,7 @@ export {
 } from "./chat-messages"
 
 // Phone number validation
-export { E164PhoneSchema, e164OrNullSchema } from "./phone"
+export { e164PhoneSchema as E164PhoneSchema, e164OrNullSchema } from "./phone"
 
 // Phone number API response
 export {
