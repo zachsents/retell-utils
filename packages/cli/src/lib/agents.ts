@@ -554,9 +554,10 @@ export async function getLocalState({
     const agentDirName = path.dirname(agentIdPath)
     const agentDirFull = path.join(agentsDir, agentDirName)
 
-    // Read all files in this agent directory
+    // Read all files in this agent directory (dot: true includes dotfiles
+    // like .positions.json which are excluded by default)
     const filesGlob = new Bun.Glob("**/*")
-    for await (const file of filesGlob.scan(agentDirFull)) {
+    for await (const file of filesGlob.scan({ cwd: agentDirFull, dot: true })) {
       const filePath = path.join(agentDirFull, file)
       const stat = await fs.stat(filePath)
       if (stat.isFile()) {
