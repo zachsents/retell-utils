@@ -786,13 +786,15 @@ export async function serializeState(
           for (const n of flowConfig.nodes) {
             if (n.id && n.name) nodeNameById.set(n.id, n.name)
 
-            // Collect edges from both "edges" array and single "edge" property
-            // (transfer_call nodes use singular "edge")
+            // Collect edges from "edges" array, single "edge" property
+            // (transfer_call nodes), and "always_edge" ("After User Responds")
             const edgesArray = "edges" in n ? n.edges : undefined
             const singleEdge = "edge" in n ? n.edge : undefined
+            const alwaysEdge = "always_edge" in n ? n.always_edge : undefined
             const allEdges = [
               ...(edgesArray ?? []),
               ...(singleEdge ? [singleEdge] : []),
+              ...(alwaysEdge ? [alwaysEdge] : []),
             ]
 
             for (const edge of allEdges) {
@@ -821,7 +823,12 @@ export async function serializeState(
               // Build navigation frontmatter
               const previous = node.id ? (incomingEdges.get(node.id) ?? []) : []
               const nodeEdges = "edges" in node ? node.edges : undefined
-              const next = (nodeEdges ?? [])
+              const nodeAlwaysEdge =
+                "always_edge" in node ? node.always_edge : undefined
+              const next = [
+                ...(nodeEdges ?? []),
+                ...(nodeAlwaysEdge ? [nodeAlwaysEdge] : []),
+              ]
                 .map((e) =>
                   e.destination_node_id
                     ? nodeNameById.get(e.destination_node_id)

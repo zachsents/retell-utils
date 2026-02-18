@@ -91,6 +91,7 @@ export const FlowNodeSchema = z.object({
   edge: FlowEdgeSchema.optional(),
   else_edge: FlowEdgeSchema.optional(),
   skip_response_edge: FlowEdgeSchema.optional(),
+  always_edge: FlowEdgeSchema.optional(),
 
   // Conversation node fields
   start_speaker: StartSpeakerSchema.optional(),
