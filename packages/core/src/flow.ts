@@ -70,6 +70,7 @@ const GlobalNodeSettingSchema = z.object({
   condition: z.string().optional(),
   positive_finetune_examples: z.array(FinetuneExampleSchema).optional(),
   negative_finetune_examples: z.array(FinetuneExampleSchema).optional(),
+  cool_down: z.number().optional(),
 })
 
 /** Schema for a conversation flow node with all known fields explicit. */
