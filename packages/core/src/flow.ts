@@ -96,6 +96,7 @@ export const FlowNodeSchema = z.object({
 
   // Conversation node fields
   start_speaker: StartSpeakerSchema.optional(),
+  interruption_sensitivity: z.number().optional(),
   global_node_setting: GlobalNodeSettingSchema.optional(),
   finetune_transition_examples: z
     .array(FinetuneExampleSchema)
@@ -123,6 +124,7 @@ export const FlowNodeSchema = z.object({
 
 /** A local component embedded within a conversation flow. */
 export const FlowComponentSchema = z.object({
+  conversation_flow_component_id: z.string().optional(),
   name: z.string().optional(),
   nodes: z.array(FlowNodeSchema).optional(),
   tools: z.array(LlmToolSchema).nullable().optional(),
