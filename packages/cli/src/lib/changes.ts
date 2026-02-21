@@ -34,6 +34,41 @@ export type Changes = BaseChanges & {
 }
 
 /**
+ * Returns true if every element is a plain object with a unique string `id`.
+ * Acts as a type guard so callers can destructure `{ id, ...rest }` safely.
+ */
+function allHaveUniqueIds(
+  arr: unknown[],
+): arr is Array<Record<string, unknown> & { id: string }> {
+  const ids = new Set<string>()
+  return arr.every((item) => {
+    if (!R.isPlainObject(item) || !R.isString(item.id)) return false
+    if (ids.has(item.id)) return false
+    ids.add(item.id)
+    return true
+  })
+}
+
+/**
+ * Recursively converts arrays of objects with unique `id` props into objects
+ * keyed by `id`, so microdiff matches by identity instead of by index.
+ */
+function keyArraysById(obj: Record<string, unknown>): Record<string, unknown>
+function keyArraysById(obj: unknown): unknown
+function keyArraysById(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    if (obj.length > 0 && allHaveUniqueIds(obj)) {
+      return R.mapToObj(obj, ({ id, ...rest }) => [id, keyArraysById(rest)])
+    }
+    return obj.map((item) => keyArraysById(item))
+  }
+  if (R.isPlainObject(obj)) {
+    return R.mapValues(obj, (v) => keyArraysById(v))
+  }
+  return obj
+}
+
+/**
  * Computes differences between a source state and a reference state. When
  * `includeNew` is true, items without a remote counterpart are included as
  * CREATE diffs (used by publish). When false, they are skipped (used by
@@ -76,7 +111,9 @@ export function computeChanges(
         ? (["_id", "_version"] as const)
         : (["_id", "_version", "response_engine"] as const)
 
-    const differences = diff(R.omit(ref, omitFields), R.omit(agent, omitFields))
+    const a = keyArraysById(R.omit(ref, omitFields))
+    const b = keyArraysById(R.omit(agent, omitFields))
+    const differences = diff(a, b)
     if (differences.length > 0) {
       changes.voiceAgents.push({
         id: agent._id,
@@ -107,7 +144,9 @@ export function computeChanges(
         ? (["_id", "_version"] as const)
         : (["_id", "_version", "response_engine"] as const)
 
-    const differences = diff(R.omit(ref, omitFields), R.omit(agent, omitFields))
+    const a = keyArraysById(R.omit(ref, omitFields))
+    const b = keyArraysById(R.omit(agent, omitFields))
+    const differences = diff(a, b)
     if (differences.length > 0) {
       changes.chatAgents.push({
         id: agent._id,
@@ -133,10 +172,9 @@ export function computeChanges(
       continue
     }
 
-    const differences = diff(
-      R.omit(ref, ["_id", "_version"]),
-      R.omit(llm, ["_id", "_version"]),
-    )
+    const a = keyArraysById(R.omit(ref, ["_id", "_version"]))
+    const b = keyArraysById(R.omit(llm, ["_id", "_version"]))
+    const differences = diff(a, b)
     if (differences.length > 0) {
       changes.llms.push({
         id: llm._id,
@@ -162,10 +200,9 @@ export function computeChanges(
       continue
     }
 
-    const differences = diff(
-      R.omit(ref, ["_id", "_version"]),
-      R.omit(flow, ["_id", "_version"]),
-    )
+    const a = keyArraysById(R.omit(ref, ["_id", "_version"]))
+    const b = keyArraysById(R.omit(flow, ["_id", "_version"]))
+    const differences = diff(a, b)
     if (differences.length > 0) {
       changes.flows.push({
         id: flow._id,
