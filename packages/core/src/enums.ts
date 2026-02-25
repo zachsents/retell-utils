@@ -52,6 +52,7 @@ export const DisconnectionReasonSchema = z.enum([
   "error_unknown",
   "error_user_not_joined",
   "registered_call_timeout",
+  "unknown",
 ])
 
 /** User sentiment as determined by post-call/chat analysis. */

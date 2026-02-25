@@ -139,10 +139,10 @@ export function createCallSchemas<
     /** Call duration in milliseconds. */
     duration_ms: z.number().catch(0),
     /**
-     * Why the call was disconnected. Falls back to "error_unknown" if
+     * Why the call was disconnected. Falls back to "unknown" if
      * missing/invalid.
      */
-    disconnection_reason: DisconnectionReasonSchema.catch("error_unknown"),
+    disconnection_reason: DisconnectionReasonSchema.catch("unknown"),
     /** Plain-text transcript. May be absent if data storage settings strip it. */
     transcript: z.string().optional(),
     /** Structured transcript with word-level timestamps. */
