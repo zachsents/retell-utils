@@ -1,6 +1,7 @@
-import { checkbox, confirm } from "@inquirer/prompts"
+import { checkbox } from "@inquirer/prompts"
 import {
   ChatAgentResponseSchema,
+  ConversationFlowComponentResponseSchema,
   retellPagination,
   VoiceAgentResponseSchema,
 } from "@core"
@@ -13,6 +14,7 @@ const SYNC_CONFIG_FILE = ".retell-sync.json"
 
 const syncConfigSchema = z.object({
   agents: z.array(z.string()).optional(),
+  components: z.array(z.string()).optional(),
 })
 
 type SyncConfig = z.infer<typeof syncConfigSchema>
@@ -40,10 +42,10 @@ export async function writeSyncConfig(config: SyncConfig): Promise<void> {
 
 /**
  * Prompts the user to select agents interactively from the available agents in
- * the account. Includes both voice and chat agents.
+ * the account. Includes both voice and chat agents. Pre-checks agents that are
+ * already in the dotfile.
  */
 export async function selectAgentsInteractive(): Promise<string[]> {
-  // Fetch both voice and chat agents in parallel
   const paginationParams = (opts: {
     limit?: number
     pagination_key?: string
@@ -57,7 +59,7 @@ export async function selectAgentsInteractive(): Promise<string[]> {
     return p.toString()
   }
 
-  const [voiceAgents, chatAgents] = await Promise.all([
+  const [voiceAgents, chatAgents, config] = await Promise.all([
     retellPagination(
       async (opts) =>
         z
@@ -74,7 +76,10 @@ export async function selectAgentsInteractive(): Promise<string[]> {
           ),
       "agent_id",
     ),
+    readSyncConfig(),
   ])
+
+  const preSelected = new Set(config?.agents ?? [])
 
   // Dedupe voice agents by agent_id (keep latest version)
   const voiceAgentMap = new Map<
@@ -116,6 +121,7 @@ export async function selectAgentsInteractive(): Promise<string[]> {
     choices: allAgents.map((agent) => ({
       name: `${agent.agent_name ?? agent.agent_id} (${agent._channel})`,
       value: agent.agent_id,
+      checked: preSelected.has(agent.agent_id),
     })),
   })
 
@@ -124,16 +130,9 @@ export async function selectAgentsInteractive(): Promise<string[]> {
     return []
   }
 
-  // Ask if they want to save the selection
-  const save = await confirm({
-    message: `Save selection to ${SYNC_CONFIG_FILE}?`,
-    default: true,
-  })
-
-  if (save) {
-    await writeSyncConfig({ agents: selected })
-    logger.dim(`Saved to ${SYNC_CONFIG_FILE}`)
-  }
+  const existing = (await readSyncConfig()) ?? {}
+  await writeSyncConfig({ ...existing, agents: selected })
+  logger.dim(`Saved to ${SYNC_CONFIG_FILE}`)
 
   return selected
 }
@@ -172,4 +171,82 @@ export async function resolveAgentIds(
 
   // Interactive selection
   return selectAgentsInteractive()
+}
+
+/**
+ * Prompts the user to select shared components interactively from the available
+ * components in the account. Pre-checks components that are already in the
+ * dotfile.
+ */
+export async function selectComponentsInteractive(): Promise<string[]> {
+  const [allComponents, config] = await Promise.all([
+    z
+      .array(ConversationFlowComponentResponseSchema)
+      .parse(await retellFetch("/list-conversation-flow-components")),
+    readSyncConfig(),
+  ])
+
+  if (allComponents.length === 0) {
+    logger.warn("No shared components found in the account")
+    return []
+  }
+
+  const preSelected = new Set(config?.components ?? [])
+
+  const sorted = [...allComponents].sort((a, b) =>
+    (a.name ?? a.conversation_flow_component_id).localeCompare(
+      b.name ?? b.conversation_flow_component_id,
+    ),
+  )
+
+  const selected = await checkbox({
+    message: "Select components to sync:",
+    choices: sorted.map((c) => ({
+      name: c.name ?? c.conversation_flow_component_id,
+      value: c.conversation_flow_component_id,
+      checked: preSelected.has(c.conversation_flow_component_id),
+    })),
+  })
+
+  if (selected.length === 0) {
+    logger.warn("No components selected")
+    return []
+  }
+
+  const existing = (await readSyncConfig()) ?? {}
+  await writeSyncConfig({ ...existing, components: selected })
+  logger.dim(`Saved to ${SYNC_CONFIG_FILE}`)
+
+  return selected
+}
+
+/**
+ * Resolves component IDs based on flags, config file, or interactive selection.
+ * Returns null if all components should be synced, or undefined if component
+ * syncing should be skipped entirely.
+ */
+export async function resolveComponentIds({
+  all = false,
+  select = false,
+}: { all?: boolean; select?: boolean } = {}): Promise<
+  string[] | null | undefined
+> {
+  if (select) {
+    return selectComponentsInteractive()
+  }
+
+  if (all) {
+    return null
+  }
+
+  const config = await readSyncConfig()
+  if (config?.components && config.components.length > 0) {
+    logger.dim(
+      `Using ${config.components.length} component(s) from ${SYNC_CONFIG_FILE}`,
+    )
+    return config.components
+  }
+
+  // No components configured -- skip silently
+  return undefined
 }

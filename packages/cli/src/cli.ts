@@ -4,6 +4,7 @@ import { Command } from "commander"
 import { deployCommand } from "./commands/deploy"
 import { publishCommand } from "./commands/publish"
 import { pullCommand } from "./commands/pull"
+import { DEFAULT_COMPONENTS_DIR } from "./lib/components"
 import { DEFAULT_AGENTS_DIR } from "./lib/utils.js"
 
 const program = new Command()
@@ -16,14 +17,20 @@ program
     "Directory for agent files",
     DEFAULT_AGENTS_DIR,
   )
+  .option(
+    "--components-dir <dir>",
+    "Directory for shared component files",
+    DEFAULT_COMPONENTS_DIR,
+  )
 
 program
   .command("pull [agentIds...]")
-  .description(
-    "Pull agents from Retell API (pulls latest draft state by default)",
-  )
+  .description("Pull agents and shared components from Retell API")
   .option("-a, --all", "Pull all agents in the account")
-  .option("-s, --select", "Force interactive agent selection")
+  .option(
+    "-s, --select",
+    "Force interactive selection for agents and components",
+  )
   .option("-y, --yes", "Skip confirmation prompts")
   .option(
     "-v, --version <number>",
@@ -34,9 +41,12 @@ program
 
 program
   .command("deploy [agentIds...]")
-  .description("Deploy local changes to Retell draft")
+  .description("Deploy local agent and component changes to Retell")
   .option("-a, --all", "Deploy all agents in the account")
-  .option("-s, --select", "Force interactive agent selection")
+  .option(
+    "-s, --select",
+    "Force interactive selection for agents and components",
+  )
   .option("-n, --dry-run", "Show changes without applying")
   .option("-v, --verbose", "Show full diff details (use with --dry-run)")
   .option("-q, --quiet", "Output only affected agent IDs (for piping)")

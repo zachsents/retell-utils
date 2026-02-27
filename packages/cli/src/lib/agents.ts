@@ -16,8 +16,8 @@ import { agentFieldDocs } from "./agent-field-docs"
 import { chatAgentFieldDocs } from "./chat-agent-field-docs"
 import { flowFieldDocs } from "./flow-field-docs"
 import { llmFieldDocs } from "./llm-field-docs"
+import { extractNodePrompts, extractPositions } from "./flow-helpers"
 import {
-  createFlowVisualization,
   DEFAULT_AGENTS_DIR,
   FILE_HASH_LENGTH,
   readJson,
@@ -777,125 +777,13 @@ export async function serializeState(
           flowConfig.global_prompt = "file://./global_prompt.md"
         }
 
-        // Extract node prompts to files
+        // Extract node prompts to separate markdown files
         if (flowConfig.nodes) {
-          // Build lookup maps for node navigation context
-          const nodeNameById = new Map<string, string>()
-          const incomingEdges = new Map<string, string[]>()
-
-          for (const n of flowConfig.nodes) {
-            if (n.id && n.name) nodeNameById.set(n.id, n.name)
-
-            // Collect edges from "edges" array, single "edge" property
-            // (transfer_call nodes), and "always_edge" ("After User Responds")
-            const edgesArray = "edges" in n ? n.edges : undefined
-            const singleEdge = "edge" in n ? n.edge : undefined
-            const alwaysEdge = "always_edge" in n ? n.always_edge : undefined
-            const allEdges = [
-              ...(edgesArray ?? []),
-              ...(singleEdge ? [singleEdge] : []),
-              ...(alwaysEdge ? [alwaysEdge] : []),
-            ]
-
-            for (const edge of allEdges) {
-              const destId = edge.destination_node_id
-              if (destId) {
-                if (!incomingEdges.has(destId)) incomingEdges.set(destId, [])
-                if (n.name) incomingEdges.get(destId)!.push(n.name)
-              }
-            }
-          }
-
-          for (const node of flowConfig.nodes) {
-            if (
-              node.id &&
-              node.type === "conversation" &&
-              node.instruction?.type === "prompt" &&
-              typeof node.instruction.text === "string" &&
-              !node.instruction.text.startsWith("file://")
-            ) {
-              const nodeHash = node.id.slice(-FILE_HASH_LENGTH)
-              const nodeName = node.name
-                ? `${toSnakeCase(node.name)}_${nodeHash}`
-                : `${node.type}_${nodeHash}`
-              const nodeFileName = `nodes/${nodeName}.md`
-
-              // Build navigation frontmatter
-              const previous = node.id ? (incomingEdges.get(node.id) ?? []) : []
-              const nodeEdges = "edges" in node ? node.edges : undefined
-              const nodeAlwaysEdge =
-                "always_edge" in node ? node.always_edge : undefined
-              const next = [
-                ...(nodeEdges ?? []),
-                ...(nodeAlwaysEdge ? [nodeAlwaysEdge] : []),
-              ]
-                .map((e) =>
-                  e.destination_node_id
-                    ? nodeNameById.get(e.destination_node_id)
-                    : undefined,
-                )
-                .filter((name): name is string => !!name)
-
-              // Generate flow visualization
-              const flowViz = node.name
-                ? createFlowVisualization(node.name, previous, next)
-                : undefined
-
-              files[path.join(agentDirPath, nodeFileName)] =
-                await writeMarkdown(node.instruction.text, {
-                  nodeId: node.id,
-                  flow: flowViz,
-                })
-
-              node.instruction.text = `file://./${nodeFileName}`
-            }
-          }
+          await extractNodePrompts(flowConfig.nodes, agentDirPath, files)
         }
 
-        // Extract display positions into a separate dotfile so cosmetic
-        // UI layout changes don't clutter the main config diff.
-        const roundPos = (p: { x: number; y: number }) => ({
-          x: Math.round(p.x),
-          y: Math.round(p.y),
-        })
-
-        const positions: {
-          begin_tag?: { x: number; y: number }
-          nodes?: Record<string, { x: number; y: number }>
-          components?: Record<string, { x: number; y: number }>
-        } = {}
-
-        if (flowConfig.begin_tag_display_position) {
-          positions.begin_tag = roundPos(flowConfig.begin_tag_display_position)
-          delete flowConfig.begin_tag_display_position
-        }
-
-        if (flowConfig.nodes) {
-          for (const node of flowConfig.nodes) {
-            if (node.id && node.display_position) {
-              ;(positions.nodes ??= {})[node.id] = roundPos(
-                node.display_position,
-              )
-              delete node.display_position
-            }
-          }
-        }
-
-        if (flowConfig.components) {
-          for (const comp of flowConfig.components) {
-            if (comp.name && comp.begin_tag_display_position) {
-              ;(positions.components ??= {})[comp.name] = roundPos(
-                comp.begin_tag_display_position,
-              )
-              delete comp.begin_tag_display_position
-            }
-          }
-        }
-
-        if (Object.keys(positions).length > 0) {
-          files[path.join(agentDirPath, ".positions.json")] =
-            await writeJson(positions)
-        }
+        // Extract display positions to a separate dotfile
+        await extractPositions(flowConfig, agentDirPath, files)
 
         // conversation-flow config
         files[path.join(agentDirPath, "conversation-flow.yaml")] =

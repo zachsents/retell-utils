@@ -8,12 +8,14 @@ import {
   getRemoteState,
   writeState,
 } from "../lib/agents"
+import { getRemoteComponents, writeComponents } from "../lib/components"
 import { createSpinner } from "../lib/logger"
-import { resolveAgentIds } from "../lib/sync-config"
+import { resolveAgentIds, resolveComponentIds } from "../lib/sync-config"
 import { DEFAULT_AGENTS_DIR, pluralize } from "../lib/utils"
 
 type GlobalOpts = {
   agentsDir?: string
+  componentsDir?: string
 }
 
 export async function pullCommand(
@@ -23,7 +25,7 @@ export async function pullCommand(
     select?: boolean
     yes?: boolean
     version?: string
-    tests?: boolean // defaults to true, --no-tests sets to false
+    tests?: boolean
   },
   cmd: Command,
 ) {
@@ -64,12 +66,19 @@ export async function pullCommand(
       return
     }
 
+    const componentIds = await resolveComponentIds({
+      all: opts.all,
+      select: opts.select,
+    })
+
     await pull({
       agentsDir: globalOpts.agentsDir,
       agentIds,
       yes: opts.yes,
       version,
-      tests: opts.tests ?? true, // default to true
+      tests: opts.tests ?? true,
+      componentsDir: globalOpts.componentsDir,
+      componentIds,
     })
   } catch (err) {
     if (err instanceof ExitPromptError) {
@@ -90,6 +99,8 @@ export async function pull({
   yes = false,
   version,
   tests = true,
+  componentsDir,
+  componentIds,
 }: {
   agentsDir?: string
   /** If null, pulls all agents. If array, pulls only those agent IDs. */
@@ -99,6 +110,9 @@ export async function pull({
   version?: number
   /** If true (default), also fetches and writes test case definitions. */
   tests?: boolean
+  componentsDir?: string
+  /** If undefined, skip component sync. If null, pull all. If array, filter. */
+  componentIds?: string[] | null | undefined
 } = {}) {
   const scopeLabel = agentIds ? `${agentIds.length} agent(s)` : "all agents"
   const versionLabel = version != null ? ` (version ${version})` : ""
@@ -154,6 +168,19 @@ export async function pull({
         `${pluralize("test case", totalTests, true)} across ${pluralize("agent", agentsWithTests, true)}`,
       ),
     )
+  }
+
+  // Pull shared components if configured
+  if (componentIds !== undefined) {
+    const compSpinner = createSpinner("Fetching shared components...")
+    const remoteComponents = await getRemoteComponents({ componentIds })
+    compSpinner.stop(
+      chalk.dim(pluralize("component", remoteComponents.length, true)),
+    )
+
+    const compWriteSpinner = createSpinner("Writing component files...")
+    await writeComponents(remoteComponents, { componentsDir, componentIds })
+    compWriteSpinner.stop(chalk.green("Done"))
   }
 
   console.log(

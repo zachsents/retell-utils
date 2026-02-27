@@ -122,6 +122,7 @@ export {
 
 // Conversation flow config schemas
 export {
+  ConversationFlowComponentResponseSchema,
   ConversationFlowResponseSchema,
   FlowComponentSchema,
   FlowEdgeSchema,

@@ -134,6 +134,23 @@ export const FlowComponentSchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
+// Shared (account-level) flow component response
+// ---------------------------------------------------------------------------
+
+/** Zod schema for a shared conversation flow component response from the API. */
+export const ConversationFlowComponentResponseSchema = z.object({
+  conversation_flow_component_id: z.string(),
+  user_modified_timestamp: z.number(),
+  linked_conversation_flow_ids: z.array(z.string()).optional(),
+  name: z.string().optional(),
+  nodes: z.array(FlowNodeSchema).optional(),
+  tools: z.array(LlmToolSchema).nullable().optional(),
+  mcps: z.array(McpConfigSchema).nullable().optional(),
+  start_node_id: z.string().nullable().optional(),
+  begin_tag_display_position: DisplayPositionSchema.nullable().optional(),
+})
+
+// ---------------------------------------------------------------------------
 // Model choice
 // ---------------------------------------------------------------------------
 

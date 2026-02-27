@@ -19,16 +19,20 @@ import {
 } from "../lib/agents"
 import {
   type Changes,
+  type ComponentChange,
   type TestCaseChange,
   computeChanges,
+  computeComponentChanges,
 } from "../lib/changes"
+import { getLocalComponents, getRemoteComponents } from "../lib/components"
 import * as logger from "../lib/logger"
-import { resolveAgentIds } from "../lib/sync-config"
+import { resolveAgentIds, resolveComponentIds } from "../lib/sync-config"
 import { DEFAULT_AGENTS_DIR, pluralize } from "../lib/utils"
 import { pull } from "./pull"
 
 type GlobalOpts = {
   agentsDir?: string
+  componentsDir?: string
 }
 
 export async function deployCommand(
@@ -53,11 +57,18 @@ export async function deployCommand(
       select: opts.select,
     })
 
+    const componentIds = await resolveComponentIds({
+      all: opts.all,
+      select: opts.select,
+    })
+
     const affectedIds = await deploy({
       agentsDir: globalOpts.agentsDir,
       agentIds,
       dryRun: opts.dryRun,
       verbose: opts.verbose,
+      componentsDir: globalOpts.componentsDir,
+      componentIds,
     })
 
     // In quiet mode, output just the affected agent IDs
@@ -82,12 +93,17 @@ export async function deploy({
   agentIds = null,
   dryRun = false,
   verbose = false,
+  componentsDir,
+  componentIds,
 }: {
   agentsDir?: string
   /** If null, deploys all agents. If array, deploys only those agent IDs. */
   agentIds?: string[] | null
   dryRun?: boolean
   verbose?: boolean
+  componentsDir?: string
+  /** If undefined, skip component sync. If null, deploy all. If array, filter. */
+  componentIds?: string[] | null | undefined
 } = {}): Promise<string[]> {
   const scopeLabel = agentIds ? `${agentIds.length} agent(s)` : "all agents"
   logger.bold(`Deploying ${scopeLabel} to Retell draft...`)
@@ -187,12 +203,29 @@ export async function deploy({
     }
   }
 
-  const changes: Changes = { ...baseChanges, testCases: testCaseChanges }
+  // Step 2c: Compute component diffs
+  let componentChanges: ComponentChange[] = []
+  if (componentIds !== undefined) {
+    const [localComponents, remoteComponents] = await Promise.all([
+      getLocalComponents({ componentsDir, componentIds }),
+      getRemoteComponents({ componentIds }),
+    ])
+    componentChanges = computeComponentChanges(
+      localComponents,
+      remoteComponents,
+    )
+  }
+
+  const changes: Changes = {
+    ...baseChanges,
+    testCases: testCaseChanges,
+    components: componentChanges,
+  }
   const totalAgentChanges =
     changes.voiceAgents.length + changes.chatAgents.length
   spinner.stop(
     chalk.dim(
-      `Found ${chalk.white(totalAgentChanges)} agent changes, ${chalk.white(changes.llms.length)} LLM changes, ${chalk.white(changes.flows.length)} flow changes, ${chalk.white(changes.testCases.length)} test case changes`,
+      `Found ${chalk.white(totalAgentChanges)} agent, ${chalk.white(changes.llms.length)} LLM, ${chalk.white(changes.flows.length)} flow, ${chalk.white(changes.testCases.length)} test case, ${chalk.white(changes.components.length)} component changes`,
     ),
   )
 
@@ -200,7 +233,8 @@ export async function deploy({
     totalAgentChanges +
     changes.llms.length +
     changes.flows.length +
-    changes.testCases.length
+    changes.testCases.length +
+    changes.components.length
 
   // Collect affected agent IDs (agents with direct changes + agents whose LLMs/flows changed)
   const affectedAgentIds = findAffectedAgentIds(changes, localState)
@@ -223,7 +257,7 @@ export async function deploy({
   spinner = logger.createSpinner(`Deploying ${totalChanges} changes...`)
 
   const updateResults = await Promise.allSettled([
-    // Voice agent updates (response_engine is read-only for retell-llm/conversation-flow, but mutable for custom-llm)
+    // Voice agent updates
     ...changes.voiceAgents.map(async (change) => {
       const { _id, _version, response_engine, ...baseData } = change.current
       const updateData =
@@ -273,6 +307,20 @@ export async function deploy({
       await updateTestCaseDefinition(_id, updateData)
       return { type: "test case" as const, id: _id, name: change.name }
     }),
+    // Component updates
+    ...changes.components.map(async (change) => {
+      const {
+        _id,
+        _timestamp,
+        linked_conversation_flow_ids: _linkedFlows,
+        ...updateData
+      } = change.current
+      await retellFetch(`/update-conversation-flow-component/${_id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateData),
+      })
+      return { type: "component" as const, id: _id, name: change.name }
+    }),
   ])
 
   spinner.stop(chalk.dim("Done"))
@@ -292,7 +340,7 @@ export async function deploy({
   // Re-pull to get the updated state from Retell
   if (!logger.isQuiet()) {
     logger.bold("Syncing latest state...")
-    await pull({ agentsDir, agentIds })
+    await pull({ agentsDir, agentIds, componentsDir, componentIds })
   }
 
   return [...affectedAgentIds]
@@ -416,6 +464,16 @@ function printChangeSummary(changes: Changes, { verbose = false } = {}) {
   if (changes.testCases.length > 0) {
     console.log(chalk.cyan("\nTest cases to update:"))
     for (const change of changes.testCases) {
+      console.log(`  ${chalk.bold(change.name)} ${chalk.dim(`(${change.id})`)}`)
+      for (const d of change.differences) {
+        printDiff(d, { verbose })
+      }
+    }
+  }
+
+  if (changes.components.length > 0) {
+    console.log(chalk.cyan("\nShared components to update:"))
+    for (const change of changes.components) {
       console.log(`  ${chalk.bold(change.name)} ${chalk.dim(`(${change.id})`)}`)
       for (const d of change.differences) {
         printDiff(d, { verbose })

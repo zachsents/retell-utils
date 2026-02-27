@@ -8,6 +8,7 @@ import type {
   CanonicalTestCase,
   CanonicalVoiceAgent,
 } from "./agents"
+import type { CanonicalComponent } from "./components"
 
 export type ResourceChange<T> = {
   id: string
@@ -21,6 +22,7 @@ export type ChatAgentChange = ResourceChange<CanonicalChatAgent>
 export type LLMChange = ResourceChange<CanonicalLLM>
 export type FlowChange = ResourceChange<CanonicalConversationFlow>
 export type TestCaseChange = ResourceChange<CanonicalTestCase>
+export type ComponentChange = ResourceChange<CanonicalComponent>
 
 export type BaseChanges = {
   voiceAgents: VoiceAgentChange[]
@@ -31,6 +33,7 @@ export type BaseChanges = {
 
 export type Changes = BaseChanges & {
   testCases: TestCaseChange[]
+  components: ComponentChange[]
 }
 
 /**
@@ -208,6 +211,37 @@ export function computeChanges(
         id: flow._id,
         name: flow._id,
         current: flow,
+        differences,
+      })
+    }
+  }
+
+  return changes
+}
+
+/**
+ * Computes differences between local and remote shared components. Returns only
+ * components that have actual changes.
+ */
+export function computeComponentChanges(
+  local: CanonicalComponent[],
+  remote: CanonicalComponent[],
+): ComponentChange[] {
+  const refMap = new Map(remote.map((c) => [c._id, c]))
+  const changes: ComponentChange[] = []
+
+  for (const component of local) {
+    const ref = refMap.get(component._id)
+    if (!ref) continue
+
+    const a = keyArraysById(R.omit(ref, ["_id", "_timestamp"]))
+    const b = keyArraysById(R.omit(component, ["_id", "_timestamp"]))
+    const differences = diff(a, b)
+    if (differences.length > 0) {
+      changes.push({
+        id: component._id,
+        name: component.name ?? component._id,
+        current: component,
         differences,
       })
     }
