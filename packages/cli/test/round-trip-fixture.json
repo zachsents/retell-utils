@@ -1152,6 +1152,26 @@
             "type": "prompt",
             "text": "Based on the caller's info, we think they'll be best served by a member of the team.\n\nFollow these steps:\n\n- Let the caller know that based on their info, they'll be best served by a member of the team. You'll be passing their information to the local office team. Someone will follow up with them shortly.\n\n- Then ask if they have any other questions you can help with.\n"
           }
+        },
+        {
+          "component_type": "shared",
+          "component_id": "conversation_flow_component_abc123",
+          "else_edge": {
+            "destination_node_id": "node-1770445149827",
+            "id": "component-node-fixture-else-edge",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "Else"
+            }
+          },
+          "name": "Collect Name",
+          "edges": [],
+          "id": "component-node-fixture-collect-name",
+          "type": "component",
+          "display_position": {
+            "x": 4500,
+            "y": 200
+          }
         }
       ],
       "components": [],

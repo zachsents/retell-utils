@@ -1150,7 +1150,7 @@ export async function getLocalTestCases(
   const metadata = readJson(
     metaContent,
     z.object({
-      response_engine: z.object({}).passthrough(),
+      response_engine: z.looseObject({}),
       test_cases: z.array(
         z.object({
           id: z.string(),

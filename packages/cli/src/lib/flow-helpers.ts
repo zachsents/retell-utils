@@ -1,5 +1,6 @@
 import path from "node:path"
-import { toSnakeCase } from "@core"
+import { type FlowEdgeSchema, FlowNodeSchema, toSnakeCase } from "@core"
+import type z from "zod"
 import {
   createFlowVisualization,
   FILE_HASH_LENGTH,
@@ -7,15 +8,26 @@ import {
   writeMarkdown,
 } from "./utils"
 
-type NodeLike = Record<string, unknown> & {
-  id?: string
-  name?: string
-  type?: string
-  instruction?: { type?: string; text?: string }
-  display_position?: { x: number; y: number } | null
-  edges?: Array<{ destination_node_id?: string }>
-  edge?: { destination_node_id?: string }
-  always_edge?: { destination_node_id?: string }
+type FlowNode = z.infer<typeof FlowNodeSchema>
+type FlowEdge = z.infer<typeof FlowEdgeSchema>
+
+/** Collects outgoing edges from a node for building the incoming-edges map. */
+function collectEdges(node: FlowNode): FlowEdge[] {
+  switch (node.type) {
+    case "conversation":
+      return [
+        ...(node.edges ?? []),
+        ...(node.always_edge ? [node.always_edge] : []),
+      ]
+    case "function":
+    case "branch":
+    case "component":
+      return node.edges ?? []
+    case "transfer_call":
+      return node.edge ? [node.edge] : []
+    default:
+      return []
+  }
 }
 
 /**
@@ -24,7 +36,7 @@ type NodeLike = Record<string, unknown> & {
  * `file://` placeholder and writes the extracted content to `files`.
  */
 export async function extractNodePrompts(
-  nodes: NodeLike[],
+  nodes: FlowNode[],
   dirPath: string,
   files: Record<string, string>,
 ) {
@@ -34,13 +46,7 @@ export async function extractNodePrompts(
   for (const n of nodes) {
     if (n.id && n.name) nodeNameById.set(n.id, n.name)
 
-    const allEdges = [
-      ...((n.edges as NodeLike["edges"]) ?? []),
-      ...(n.edge ? [n.edge] : []),
-      ...(n.always_edge ? [n.always_edge] : []),
-    ]
-
-    for (const edge of allEdges) {
+    for (const edge of collectEdges(n)) {
       const destId = edge.destination_node_id
       if (destId) {
         if (!incomingEdges.has(destId)) incomingEdges.set(destId, [])
@@ -51,8 +57,8 @@ export async function extractNodePrompts(
 
   for (const node of nodes) {
     if (
-      node.id &&
       node.type === "conversation" &&
+      node.id &&
       node.instruction?.type === "prompt" &&
       typeof node.instruction.text === "string" &&
       !node.instruction.text.startsWith("file://")
@@ -63,12 +69,10 @@ export async function extractNodePrompts(
         : `${node.type}_${nodeHash}`
       const nodeFileName = `nodes/${nodeName}.md`
 
-      const previous = node.id ? (incomingEdges.get(node.id) ?? []) : []
-      const nodeEdges = node.edges
-      const nodeAlwaysEdge = node.always_edge
+      const previous = incomingEdges.get(node.id) ?? []
       const next = [
-        ...(nodeEdges ?? []),
-        ...(nodeAlwaysEdge ? [nodeAlwaysEdge] : []),
+        ...(node.edges ?? []),
+        ...(node.always_edge ? [node.always_edge] : []),
       ]
         .map((e) =>
           e.destination_node_id
@@ -106,11 +110,17 @@ const roundPos = (p: { x: number; y: number }) => ({
  * Extracts display positions from a flow-like config into a `.positions.json`
  * file. Mutates the config by deleting the position fields. Works for both full
  * conversation flows and shared components.
+ *
+ * Parameter types are intentionally wider than FlowNode — this function removes
+ * position fields, so it accepts objects where those fields are deletable.
  */
 export async function extractPositions(
   config: {
     begin_tag_display_position?: { x: number; y: number } | null
-    nodes?: NodeLike[] | null
+    nodes?: Array<{
+      id: string
+      display_position?: { x: number; y: number } | null
+    }> | null
     components?: Array<{
       name?: string
       begin_tag_display_position?: { x: number; y: number } | null

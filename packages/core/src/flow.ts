@@ -4,7 +4,6 @@ import {
   EquationCombinatorSchema,
   EquationOperatorSchema,
   FlowInstructionTypeSchema,
-  FlowNodeTypeSchema,
   FlowTransitionConditionTypeSchema,
   LlmModelSchema,
   StartSpeakerSchema,
@@ -73,28 +72,29 @@ const GlobalNodeSettingSchema = z.object({
   cool_down: z.number().optional(),
 })
 
-/** Schema for a conversation flow node with all known fields explicit. */
-export const FlowNodeSchema = z.object({
-  // Common
-  id: z.string().optional(),
-  name: z.string().optional(),
-  type: FlowNodeTypeSchema.optional(),
-  instruction: z
-    .object({
-      type: FlowInstructionTypeSchema.optional(),
-      text: z.string().optional(),
-    })
-    .optional(),
-  display_position: DisplayPositionSchema.nullable().optional(),
+// ---------------------------------------------------------------------------
+// Per-type node schemas (discriminated union on `type`)
+// ---------------------------------------------------------------------------
 
-  // Edges
-  edges: z.array(FlowEdgeSchema).optional(),
-  edge: FlowEdgeSchema.optional(),
-  else_edge: FlowEdgeSchema.optional(),
-  skip_response_edge: FlowEdgeSchema.optional(),
+const InstructionSchema = z.object({
+  type: FlowInstructionTypeSchema,
+  text: z.string(),
+})
+
+/** Fields shared by every node type. */
+const baseNodeFields = {
+  id: z.string(),
+  name: z.string(),
+  display_position: DisplayPositionSchema.default({ x: 0, y: 0 }),
+} as const
+
+const ConversationNodeSchema = z.object({
+  ...baseNodeFields,
+  type: z.literal("conversation"),
+  instruction: InstructionSchema,
+  edges: z.array(FlowEdgeSchema),
   always_edge: FlowEdgeSchema.optional(),
-
-  // Conversation node fields
+  skip_response_edge: FlowEdgeSchema.optional(),
   start_speaker: StartSpeakerSchema.optional(),
   interruption_sensitivity: z.number().optional(),
   global_node_setting: GlobalNodeSettingSchema.optional(),
@@ -106,17 +106,93 @@ export const FlowNodeSchema = z.object({
     .array(FinetuneExampleSchema)
     .nullable()
     .optional(),
-
-  // Function node fields
-  tool_id: z.string().optional(),
-  tool_type: z.string().optional(),
-  speak_during_execution: z.boolean().optional(),
-  wait_for_result: z.boolean().optional(),
-
-  // Transfer node fields
-  transfer_destination: TransferDestinationSchema.optional(),
-  transfer_option: TransferOptionSchema.optional(),
 })
+
+const EndNodeSchema = z.object({
+  ...baseNodeFields,
+  type: z.literal("end"),
+  instruction: InstructionSchema.optional(),
+  speak_during_execution: z.boolean().default(false),
+})
+
+const FunctionNodeSchema = z.object({
+  ...baseNodeFields,
+  type: z.literal("function"),
+  instruction: InstructionSchema.optional(),
+  tool_id: z.string(),
+  tool_type: z.string(),
+  speak_during_execution: z.boolean().default(false),
+  wait_for_result: z.boolean(),
+  edges: z.array(FlowEdgeSchema),
+  else_edge: FlowEdgeSchema.optional(),
+  global_node_setting: GlobalNodeSettingSchema.optional(),
+})
+
+const TransferCallNodeSchema = z.object({
+  ...baseNodeFields,
+  type: z.literal("transfer_call"),
+  instruction: InstructionSchema,
+  transfer_destination: TransferDestinationSchema,
+  transfer_option: TransferOptionSchema,
+  speak_during_execution: z.boolean().default(false),
+  edge: FlowEdgeSchema,
+})
+
+const BranchNodeSchema = z.object({
+  ...baseNodeFields,
+  type: z.literal("branch"),
+  edges: z.array(FlowEdgeSchema),
+  else_edge: FlowEdgeSchema,
+})
+
+const ComponentNodeSchema = z.object({
+  ...baseNodeFields,
+  type: z.literal("component"),
+  component_id: z.string(),
+  component_type: z.string(),
+  edges: z.array(FlowEdgeSchema),
+  else_edge: FlowEdgeSchema.optional(),
+})
+
+const PressDigitNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("press_digit"),
+})
+
+const SmsNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("sms"),
+})
+
+const ExtractDynamicVariablesNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("extract_dynamic_variables"),
+})
+
+const AgentSwapNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("agent_swap"),
+})
+
+const McpNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("mcp"),
+})
+
+/** Discriminated union of all conversation flow node types. */
+export const FlowNodeSchema = z.discriminatedUnion("type", [
+  ConversationNodeSchema,
+  EndNodeSchema,
+  FunctionNodeSchema,
+  TransferCallNodeSchema,
+  BranchNodeSchema,
+  ComponentNodeSchema,
+  PressDigitNodeSchema,
+  SmsNodeSchema,
+  ExtractDynamicVariablesNodeSchema,
+  AgentSwapNodeSchema,
+  McpNodeSchema,
+])
 
 // ---------------------------------------------------------------------------
 // Flow components

@@ -161,15 +161,11 @@ export async function serializeComponents(
 
     // Extract node prompts to markdown files
     if (config.nodes) {
-      await extractNodePrompts(
-        config.nodes as Array<Record<string, unknown>>,
-        dirPath,
-        files,
-      )
+      await extractNodePrompts(config.nodes, dirPath, files)
     }
 
     // Extract positions to dotfile
-    await extractPositions(config as Record<string, unknown>, dirPath, files)
+    await extractPositions(config, dirPath, files)
 
     // config.yaml -- everything else
     files[path.join(dirPath, "config.yaml")] = await writeYaml(config)
