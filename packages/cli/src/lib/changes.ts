@@ -234,8 +234,13 @@ export function computeComponentChanges(
     const ref = refMap.get(component._id)
     if (!ref) continue
 
-    const a = keyArraysById(R.omit(ref, ["_id", "_timestamp"]))
-    const b = keyArraysById(R.omit(component, ["_id", "_timestamp"]))
+    const omitFields = [
+      "_id",
+      "_timestamp",
+      "linked_conversation_flow_ids",
+    ] as const
+    const a = keyArraysById(R.omit(ref, omitFields))
+    const b = keyArraysById(R.omit(component, omitFields))
     const differences = diff(a, b)
     if (differences.length > 0) {
       changes.push({
