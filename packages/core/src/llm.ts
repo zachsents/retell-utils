@@ -30,7 +30,6 @@ export const TransferDestinationSchema = z.object({
 /** Transfer option configuration (warm/cold transfer behavior). */
 export const TransferOptionSchema = z.object({
   type: z.string().optional(),
-  option: HandoffOptionSchema.optional(),
   public_handoff_option: HandoffOptionSchema.optional(),
   private_handoff_option: HandoffOptionSchema.optional(),
   on_hold_music: z.string().optional(),
@@ -39,6 +38,8 @@ export const TransferOptionSchema = z.object({
   agent_detection_timeout_ms: z.number().optional(),
   show_transferee_as_caller: z.boolean().optional(),
   enable_bridge_audio_cue: z.boolean().optional(),
+  transfer_ring_duration_ms: z.number().optional(),
+  cold_transfer_mode: z.enum(["sip_refer", "sip_invite"]).optional(),
 })
 
 // ---------------------------------------------------------------------------

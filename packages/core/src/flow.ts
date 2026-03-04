@@ -179,6 +179,16 @@ const McpNodeSchema = z.looseObject({
   type: z.literal("mcp"),
 })
 
+const BridgeTransferNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("bridge_transfer"),
+})
+
+const CancelTransferNodeSchema = z.looseObject({
+  ...baseNodeFields,
+  type: z.literal("cancel_transfer"),
+})
+
 /** Discriminated union of all conversation flow node types. */
 export const FlowNodeSchema = z.discriminatedUnion("type", [
   ConversationNodeSchema,
@@ -192,6 +202,8 @@ export const FlowNodeSchema = z.discriminatedUnion("type", [
   ExtractDynamicVariablesNodeSchema,
   AgentSwapNodeSchema,
   McpNodeSchema,
+  BridgeTransferNodeSchema,
+  CancelTransferNodeSchema,
 ])
 
 // ---------------------------------------------------------------------------

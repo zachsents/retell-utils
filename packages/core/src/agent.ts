@@ -155,6 +155,7 @@ export const VoiceAgentResponseSchema = z.object({
 
   // Interaction
   responsiveness: z.number().optional(),
+  enable_dynamic_responsiveness: z.boolean().optional(),
   interruption_sensitivity: z.number().optional(),
   enable_backchannel: z.boolean().optional(),
   backchannel_frequency: z.number().optional(),
@@ -208,9 +209,11 @@ export const VoiceAgentResponseSchema = z.object({
   post_call_analysis_model: LlmModelSchema.nullable().optional(),
   analysis_successful_prompt: z.string().nullable().optional(),
   analysis_summary_prompt: z.string().nullable().optional(),
+  analysis_user_sentiment_prompt: z.string().nullable().optional(),
 
   // Privacy & storage
   data_storage_setting: DataStorageSettingSchema.nullable().optional(),
+  data_storage_retention_days: z.number().nullable().optional(),
   opt_in_signed_url: z.boolean().optional(),
   signed_url_expiration_ms: z.number().nullable().optional(),
   denoising_mode: DenoisingModeSchema.optional(),

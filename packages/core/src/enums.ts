@@ -113,6 +113,7 @@ export const VoiceModelSchema = z.enum([
   "gpt-4o-mini-tts",
   "speech-02-turbo",
   "speech-2.8-turbo",
+  "s1",
 ])
 
 /** Voice emotion options (Cartesia and Minimax providers). */
@@ -226,21 +227,6 @@ export const StartSpeakerSchema = z.enum(["user", "agent"])
 // Conversation flow enums
 // ---------------------------------------------------------------------------
 
-/** All possible conversation flow node types. */
-export const FlowNodeTypeSchema = z.enum([
-  "conversation",
-  "end",
-  "function",
-  "transfer_call",
-  "press_digit",
-  "branch",
-  "sms",
-  "extract_dynamic_variables",
-  "agent_swap",
-  "mcp",
-  "component",
-])
-
 /** Transition condition type on a flow edge. */
 export const FlowTransitionConditionTypeSchema = z.enum(["prompt", "equation"])
 
@@ -269,13 +255,14 @@ export const EquationCombinatorSchema = z.enum(["||", "&&"])
 // ---------------------------------------------------------------------------
 
 /** STT (speech-to-text) mode for voice agents. */
-export const SttModeSchema = z.enum(["fast", "accurate"])
+export const SttModeSchema = z.enum(["fast", "accurate", "custom"])
 
 /** Vocabulary specialization mode for voice agents. */
 export const VocabSpecializationSchema = z.enum(["general", "medical"])
 
 /** Audio denoising mode for voice agents. */
 export const DenoisingModeSchema = z.enum([
+  "no-denoise",
   "noise-cancellation",
   "noise-and-background-speech-cancellation",
 ])

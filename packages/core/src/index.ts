@@ -11,7 +11,6 @@ export {
   EquationCombinatorSchema,
   EquationOperatorSchema,
   FlowInstructionTypeSchema,
-  FlowNodeTypeSchema,
   FlowTransitionConditionTypeSchema,
   LlmModelSchema,
   LlmToolTypeSchema,
