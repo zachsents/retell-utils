@@ -64,11 +64,17 @@ const FinetuneExampleSchema = z.object({
   transcript: z.array(FinetuneTranscriptTurnSchema).optional(),
 })
 
+/** Fine-tune example used in global node settings (no id or destination). */
+const GlobalFinetuneExampleSchema = z.object({
+  id: z.string().optional(),
+  transcript: z.array(FinetuneTranscriptTurnSchema).optional(),
+})
+
 /** Global node setting (when this node should be entered). */
 const GlobalNodeSettingSchema = z.object({
   condition: z.string().optional(),
-  positive_finetune_examples: z.array(FinetuneExampleSchema).optional(),
-  negative_finetune_examples: z.array(FinetuneExampleSchema).optional(),
+  positive_finetune_examples: z.array(GlobalFinetuneExampleSchema).optional(),
+  negative_finetune_examples: z.array(GlobalFinetuneExampleSchema).optional(),
   cool_down: z.number().optional(),
 })
 
@@ -113,6 +119,7 @@ const EndNodeSchema = z.object({
   type: z.literal("end"),
   instruction: InstructionSchema.optional(),
   speak_during_execution: z.boolean().default(false),
+  global_node_setting: GlobalNodeSettingSchema.optional(),
 })
 
 const FunctionNodeSchema = z.object({
@@ -136,6 +143,7 @@ const TransferCallNodeSchema = z.object({
   transfer_option: TransferOptionSchema,
   speak_during_execution: z.boolean().default(false),
   edge: FlowEdgeSchema,
+  global_node_setting: GlobalNodeSettingSchema.optional(),
 })
 
 const BranchNodeSchema = z.object({
@@ -143,6 +151,7 @@ const BranchNodeSchema = z.object({
   type: z.literal("branch"),
   edges: z.array(FlowEdgeSchema),
   else_edge: FlowEdgeSchema,
+  global_node_setting: GlobalNodeSettingSchema.optional(),
 })
 
 const ComponentNodeSchema = z.object({
@@ -152,6 +161,7 @@ const ComponentNodeSchema = z.object({
   component_type: z.string(),
   edges: z.array(FlowEdgeSchema),
   else_edge: FlowEdgeSchema.optional(),
+  global_node_setting: GlobalNodeSettingSchema.optional(),
 })
 
 const PressDigitNodeSchema = z.looseObject({
