@@ -59,7 +59,7 @@ const FinetuneTranscriptTurnSchema = z.object({
 
 /** Fine-tune example for conversation or transition behavior. */
 const FinetuneExampleSchema = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   destination_node_id: z.string().optional(),
   transcript: z.array(FinetuneTranscriptTurnSchema).optional(),
 })
