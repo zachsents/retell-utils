@@ -24,6 +24,13 @@ const DisplayPositionSchema = z.object({
   y: z.number(),
 })
 
+/** Model selection configuration for conversation flows and nodes. */
+const FlowModelChoiceSchema = z.object({
+  type: z.literal("cascading"),
+  model: LlmModelSchema,
+  high_priority: z.boolean().optional(),
+})
+
 // ---------------------------------------------------------------------------
 // Flow nodes & edges
 // ---------------------------------------------------------------------------
@@ -133,6 +140,7 @@ const FunctionNodeSchema = z.object({
   edges: z.array(FlowEdgeSchema),
   else_edge: FlowEdgeSchema.optional(),
   global_node_setting: GlobalNodeSettingSchema.optional(),
+  model_choice: FlowModelChoiceSchema.optional(),
 })
 
 const TransferCallNodeSchema = z.object({
@@ -246,17 +254,6 @@ export const ConversationFlowComponentResponseSchema = z.object({
   mcps: z.array(McpConfigSchema).nullable().optional(),
   start_node_id: z.string().nullable().optional(),
   begin_tag_display_position: DisplayPositionSchema.nullable().optional(),
-})
-
-// ---------------------------------------------------------------------------
-// Model choice
-// ---------------------------------------------------------------------------
-
-/** Model selection configuration for conversation flows. */
-const FlowModelChoiceSchema = z.object({
-  type: z.literal("cascading"),
-  model: LlmModelSchema,
-  high_priority: z.boolean().optional(),
 })
 
 // ---------------------------------------------------------------------------
